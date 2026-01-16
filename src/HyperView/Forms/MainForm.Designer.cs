@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             datagridviewVMOverView = new DataGridView();
             tabcontrolMainForm = new TabControl();
             tabpagehvOverview = new TabPage();
@@ -344,6 +345,7 @@
             ClientSize = new Size(1645, 999);
             Controls.Add(tabcontrolMainForm);
             Controls.Add(menuStripTopMainForm);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStripTopMainForm;
             Name = "MainForm";
             StartPosition = FormStartPosition.CenterScreen;

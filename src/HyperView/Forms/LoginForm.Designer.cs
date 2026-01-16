@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(LoginForm));
             labelLoginFormToolName = new Label();
             pictureBox1 = new PictureBox();
             labelServer = new Label();
@@ -209,6 +210,8 @@
             Controls.Add(labelServer);
             Controls.Add(pictureBox1);
             Controls.Add(labelLoginFormToolName);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             Name = "LoginForm";
             StartPosition = FormStartPosition.CenterScreen;
