@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Management.Automation;
+﻿using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Net.Sockets;
 using System.Security;

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace HyperView.Class
+﻿namespace HyperView.Class
 {
     internal class Globals
     {

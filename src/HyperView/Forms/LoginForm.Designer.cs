@@ -81,6 +81,7 @@
             textboxServer.Name = "textboxServer";
             textboxServer.Size = new Size(292, 23);
             textboxServer.TabIndex = 3;
+            textboxServer.KeyDown += TextboxServer_KeyDown;
             // 
             // groupAuth
             // 
@@ -157,6 +158,7 @@
             textboxPassword.Name = "textboxPassword";
             textboxPassword.Size = new Size(284, 23);
             textboxPassword.TabIndex = 3;
+            textboxPassword.KeyDown += TextboxPassword_KeyDown;
             // 
             // textboxUsername
             // 
@@ -165,6 +167,7 @@
             textboxUsername.Name = "textboxUsername";
             textboxUsername.Size = new Size(284, 23);
             textboxUsername.TabIndex = 2;
+            textboxUsername.KeyDown += TextboxUsername_KeyDown;
             // 
             // radioCustom
             // 
