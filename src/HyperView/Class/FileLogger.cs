@@ -67,6 +67,136 @@ namespace HyperView.Class
             AddMessageToEventLog(logText, type, dateTime, logPath, id);
         }
 
+        /// <summary>
+        /// Writes an application startup banner to the log with system information
+        /// </summary>
+        public static void WriteStartupBanner()
+        {
+            var now = DateTime.Now;
+            var date = GetDate(now);
+            var dateTime = GetDateTime(now);
+            var logPath = GetLogPath(date);
+
+            try
+            {
+                var banner = new StringBuilder();
+                banner.AppendLine("================================================================================");
+                banner.AppendLine($"  {Globals.ToolName.HyperView} - APPLICATION STARTED");
+                banner.AppendLine("================================================================================");
+                banner.AppendLine($"  Start Time:          {dateTime}");
+                banner.AppendLine($"  Application:         {Globals.ToolName.HyperViewGui}");
+                banner.AppendLine($"  Version:             {Application.ProductVersion}");
+                banner.AppendLine($"  User:                {Environment.UserName}");
+                banner.AppendLine($"  Domain User:         {Environment.UserDomainName}\\{Environment.UserName}");
+                banner.AppendLine($"  Computer Name:       {Environment.MachineName}");
+                banner.AppendLine($"  OS Version:          {OSVersionInfo.Name}");
+                banner.AppendLine($"  OS Edition:          {OSVersionInfo.Edition}");
+                banner.AppendLine($"  OS Build:            {OSVersionInfo.BuildVersion}");
+                banner.AppendLine($"  64-bit OS:           {Environment.Is64BitOperatingSystem}");
+                banner.AppendLine($"  64-bit Process:      {Environment.Is64BitProcess}");
+                banner.AppendLine($"  Running as Admin:    {ApplicationFunctions.IsRunningAsAdmin()}");
+                banner.AppendLine($"  .NET Version:        {Environment.Version}");
+                banner.AppendLine($"  Working Directory:   {Environment.CurrentDirectory}");
+                banner.AppendLine($"  Processor Count:     {Environment.ProcessorCount}");
+                banner.AppendLine("================================================================================");
+
+                if (WriteToFile)
+                {
+                    WriteRawToFile(banner.ToString(), logPath);
+                }
+
+                Message($"Application started - Version {Application.ProductVersion}", EventType.Information, 5000);
+            }
+            catch (Exception ex)
+            {
+                Message($"Error writing startup banner: {ex.Message}", EventType.Error, 5001);
+            }
+        }
+
+        /// <summary>
+        /// Writes an application shutdown banner to the log
+        /// </summary>
+        public static void WriteShutdownBanner()
+        {
+            var now = DateTime.Now;
+            var date = GetDate(now);
+            var dateTime = GetDateTime(now);
+            var logPath = GetLogPath(date);
+
+            try
+            {
+                Message($"Application shutting down - Version {Application.ProductVersion}", EventType.Information, 5002);
+
+                var banner = new StringBuilder();
+                banner.AppendLine("================================================================================");
+                banner.AppendLine($"  {Globals.ToolName.HyperView} - APPLICATION STOPPED");
+                banner.AppendLine("================================================================================");
+                banner.AppendLine($"  Stop Time:           {dateTime}");
+                banner.AppendLine($"  User:                {Environment.UserDomainName}\\{Environment.UserName}");
+                banner.AppendLine($"  Computer Name:       {Environment.MachineName}");
+                banner.AppendLine("================================================================================");
+                banner.AppendLine();
+
+                if (WriteToFile)
+                {
+                    WriteRawToFile(banner.ToString(), logPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Message($"Error writing shutdown banner: {ex.Message}", EventType.Error, 5003);
+            }
+        }
+
+        /// <summary>
+        /// Writes raw text directly to the log file without formatting
+        /// </summary>
+        private static void WriteRawToFile(string text, string path)
+        {
+            if (_isLogging) return;
+            _isLogging = true;
+
+            try
+            {
+                // Ensure directory exists
+                if (!Directory.Exists(FileManager.LogFilePath))
+                {
+                    Directory.CreateDirectory(FileManager.LogFilePath);
+                }
+
+                // Check write access
+                if (!HasWriteAccessToDirectory(FileManager.LogFilePath))
+                {
+                    WriteToFile = false;
+                    return;
+                }
+
+                // Append raw text to file
+                if (!File.Exists(path))
+                {
+                    using (var writer = File.CreateText(path))
+                    {
+                        writer.Write(text);
+                    }
+                }
+                else
+                {
+                    using (var writer = File.AppendText(path))
+                    {
+                        writer.Write(text);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                WriteToFile = false;
+            }
+            finally
+            {
+                _isLogging = false;
+            }
+        }
+
         // Save message to logfile
         private static void AppendMessageToFile(string mess, EventType type, string dtf, string path, int id)
         {
