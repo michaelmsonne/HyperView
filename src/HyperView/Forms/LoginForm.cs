@@ -412,39 +412,69 @@ namespace HyperView.Forms
             });
         }
 
-        private bool IsLocalComputer(string computerName)
+        private static bool IsLocalComputer(string computerName)
         {
             if (string.IsNullOrWhiteSpace(computerName))
                 return true;
 
-            computerName = computerName.Trim().ToLower();
+            computerName = computerName.Trim();
 
             // Check common local names
-            if (computerName == "." || computerName == "localhost" ||
-                computerName == "127.0.0.1" || computerName == "::1")
+            if (computerName == "." || 
+                string.Equals(computerName, "localhost", StringComparison.OrdinalIgnoreCase) ||
+                computerName == "127.0.0.1" || 
+                computerName == "::1")
                 return true;
 
             // Check against actual computer name
-            string localName = Environment.MachineName.ToLower();
-            if (computerName == localName)
+            if (string.Equals(computerName, Environment.MachineName, StringComparison.OrdinalIgnoreCase))
                 return true;
+
+            // Check if it's a local IP address (IPv4)
+            if (System.Text.RegularExpressions.Regex.IsMatch(computerName, @"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"))
+            {
+                try
+                {
+                    // Get all local IPv4 addresses
+                    var localIPs = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
+                        .Where(ni => ni.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up)
+                        .SelectMany(ni => ni.GetIPProperties().UnicastAddresses)
+                        .Where(addr => addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                        .Select(addr => addr.Address.ToString())
+                        .Where(ip => !ip.StartsWith("169.254.")) // Exclude APIPA addresses
+                        .Distinct()
+                        .ToList();
+
+                    if (localIPs.Contains(computerName))
+                    {
+                        FileLogger.Message($"'{computerName}' found in local IP addresses",
+                            FileLogger.EventType.Information, 1043);
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.Message($"Error checking local IP addresses: {ex.Message}",
+                        FileLogger.EventType.Warning, 1046);
+                }
+            }
 
             // Check against hostname
             try
             {
-                string hostname = System.Net.Dns.GetHostName().ToLower();
-                if (computerName == hostname)
+                string hostname = System.Net.Dns.GetHostName();
+                if (string.Equals(computerName, hostname, StringComparison.OrdinalIgnoreCase))
                     return true;
 
                 // Check against FQDN
                 var hostEntry = System.Net.Dns.GetHostEntry(hostname);
-                if (computerName == hostEntry.HostName.ToLower())
+                if (string.Equals(computerName, hostEntry.HostName, StringComparison.OrdinalIgnoreCase))
                     return true;
 
                 // Check against all aliases
                 foreach (var alias in hostEntry.Aliases)
                 {
-                    if (computerName == alias.ToLower())
+                    if (string.Equals(computerName, alias, StringComparison.OrdinalIgnoreCase))
                         return true;
                 }
             }

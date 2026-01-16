@@ -61,19 +61,29 @@
             exportDataToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
             exitToolStripMenuItem = new ToolStripMenuItem();
+            pictureboxSupportMe = new PictureBox();
+            statusStripMainForm = new StatusStrip();
+            toolStripStatusLabelMainForm = new ToolStripStatusLabel();
+            toolStripStatusLabelTextMainForm = new ToolStripStatusLabel();
+            groupBoxMainFormServerDetails = new GroupBox();
+            labelOverviewHelpText = new Label();
+            buttonLoadVMsrefresh = new Button();
+            buttonSummaryhvOverviewView = new Button();
             ((System.ComponentModel.ISupportInitialize)datagridviewVMOverView).BeginInit();
             tabcontrolMainForm.SuspendLayout();
             tabpagehvOverview.SuspendLayout();
             menuStripTopMainForm.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureboxSupportMe).BeginInit();
+            statusStripMainForm.SuspendLayout();
             SuspendLayout();
             // 
             // datagridviewVMOverView
             // 
             datagridviewVMOverView.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             datagridviewVMOverView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            datagridviewVMOverView.Location = new Point(6, 38);
+            datagridviewVMOverView.Location = new Point(6, 35);
             datagridviewVMOverView.Name = "datagridviewVMOverView";
-            datagridviewVMOverView.Size = new Size(1601, 800);
+            datagridviewVMOverView.Size = new Size(1601, 803);
             datagridviewVMOverView.TabIndex = 0;
             // 
             // tabcontrolMainForm
@@ -103,6 +113,9 @@
             // 
             // tabpagehvOverview
             // 
+            tabpagehvOverview.Controls.Add(buttonSummaryhvOverviewView);
+            tabpagehvOverview.Controls.Add(buttonLoadVMsrefresh);
+            tabpagehvOverview.Controls.Add(labelOverviewHelpText);
             tabpagehvOverview.Controls.Add(datagridviewVMOverView);
             tabpagehvOverview.Location = new Point(4, 24);
             tabpagehvOverview.Name = "tabpagehvOverview";
@@ -338,13 +351,85 @@
             exitToolStripMenuItem.Size = new Size(273, 22);
             exitToolStripMenuItem.Text = "Exit";
             // 
+            // pictureboxSupportMe
+            // 
+            pictureboxSupportMe.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            pictureboxSupportMe.BackColor = Color.Transparent;
+            pictureboxSupportMe.Image = (Image)resources.GetObject("pictureboxSupportMe.Image");
+            pictureboxSupportMe.Location = new Point(1520, 5);
+            pictureboxSupportMe.Name = "pictureboxSupportMe";
+            pictureboxSupportMe.Size = new Size(119, 36);
+            pictureboxSupportMe.SizeMode = PictureBoxSizeMode.Zoom;
+            pictureboxSupportMe.TabIndex = 1;
+            pictureboxSupportMe.TabStop = false;
+            // 
+            // statusStripMainForm
+            // 
+            statusStripMainForm.Items.AddRange(new ToolStripItem[] { toolStripStatusLabelMainForm, toolStripStatusLabelTextMainForm });
+            statusStripMainForm.Location = new Point(0, 977);
+            statusStripMainForm.Name = "statusStripMainForm";
+            statusStripMainForm.Size = new Size(1645, 22);
+            statusStripMainForm.TabIndex = 3;
+            statusStripMainForm.Text = "statusStrip1";
+            // 
+            // toolStripStatusLabelMainForm
+            // 
+            toolStripStatusLabelMainForm.Name = "toolStripStatusLabelMainForm";
+            toolStripStatusLabelMainForm.Size = new Size(42, 17);
+            toolStripStatusLabelMainForm.Text = "Status:";
+            // 
+            // toolStripStatusLabelTextMainForm
+            // 
+            toolStripStatusLabelTextMainForm.Name = "toolStripStatusLabelTextMainForm";
+            toolStripStatusLabelTextMainForm.Size = new Size(67, 17);
+            toolStripStatusLabelTextMainForm.Text = "%STATUS%";
+            // 
+            // groupBoxMainFormServerDetails
+            // 
+            groupBoxMainFormServerDetails.Location = new Point(12, 905);
+            groupBoxMainFormServerDetails.Name = "groupBoxMainFormServerDetails";
+            groupBoxMainFormServerDetails.Size = new Size(449, 58);
+            groupBoxMainFormServerDetails.TabIndex = 4;
+            groupBoxMainFormServerDetails.TabStop = false;
+            groupBoxMainFormServerDetails.Text = "Details";
+            // 
+            // labelOverviewHelpText
+            // 
+            labelOverviewHelpText.AutoSize = true;
+            labelOverviewHelpText.Location = new Point(6, 3);
+            labelOverviewHelpText.Name = "labelOverviewHelpText";
+            labelOverviewHelpText.Size = new Size(705, 30);
+            labelOverviewHelpText.TabIndex = 1;
+            labelOverviewHelpText.Text = "This view provides provides overview and core functionality within the Hyper-V space for information about VMs and other data that\r\nextends that functionality over multiple servers.";
+            // 
+            // buttonLoadVMsrefresh
+            // 
+            buttonLoadVMsrefresh.Location = new Point(1497, 6);
+            buttonLoadVMsrefresh.Name = "buttonLoadVMsrefresh";
+            buttonLoadVMsrefresh.Size = new Size(110, 23);
+            buttonLoadVMsrefresh.TabIndex = 2;
+            buttonLoadVMsrefresh.Text = "&Load VMs/refresh";
+            buttonLoadVMsrefresh.UseVisualStyleBackColor = true;
+            // 
+            // buttonSummaryhvOverviewView
+            // 
+            buttonSummaryhvOverviewView.Location = new Point(1416, 6);
+            buttonSummaryhvOverviewView.Name = "buttonSummaryhvOverviewView";
+            buttonSummaryhvOverviewView.Size = new Size(75, 23);
+            buttonSummaryhvOverviewView.TabIndex = 3;
+            buttonSummaryhvOverviewView.Text = "Summary";
+            buttonSummaryhvOverviewView.UseVisualStyleBackColor = true;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1645, 999);
-            Controls.Add(tabcontrolMainForm);
+            Controls.Add(groupBoxMainFormServerDetails);
+            Controls.Add(statusStripMainForm);
+            Controls.Add(pictureboxSupportMe);
             Controls.Add(menuStripTopMainForm);
+            Controls.Add(tabcontrolMainForm);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStripTopMainForm;
             Name = "MainForm";
@@ -353,8 +438,12 @@
             ((System.ComponentModel.ISupportInitialize)datagridviewVMOverView).EndInit();
             tabcontrolMainForm.ResumeLayout(false);
             tabpagehvOverview.ResumeLayout(false);
+            tabpagehvOverview.PerformLayout();
             menuStripTopMainForm.ResumeLayout(false);
             menuStripTopMainForm.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureboxSupportMe).EndInit();
+            statusStripMainForm.ResumeLayout(false);
+            statusStripMainForm.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -393,5 +482,13 @@
         private TabPage tabpagehvInventory;
         private TabPage tabpageCreateVM;
         private TabPage tabpageHealthOverview;
+        private PictureBox pictureboxSupportMe;
+        private StatusStrip statusStripMainForm;
+        private ToolStripStatusLabel toolStripStatusLabelMainForm;
+        private ToolStripStatusLabel toolStripStatusLabelTextMainForm;
+        private GroupBox groupBoxMainFormServerDetails;
+        private Label labelOverviewHelpText;
+        private Button buttonSummaryhvOverviewView;
+        private Button buttonLoadVMsrefresh;
     }
 }
