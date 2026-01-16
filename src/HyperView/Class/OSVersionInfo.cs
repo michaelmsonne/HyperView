@@ -791,7 +791,9 @@ namespace HyperView.Class
                                             {
                                                 // Check build number for server versions
                                                 var buildNumber = BuildVersion;
-                                                if (buildNumber >= 20348)
+                                                if (buildNumber >= 26100)
+                                                    name = "Windows Server 2025";
+                                                else if (buildNumber >= 20348)
                                                     name = "Windows Server 2022";
                                                 else if (buildNumber >= 17763)
                                                     name = "Windows Server 2019";
