@@ -14,13 +14,6 @@
             internal static string Error = "Error";
         }
 
-        internal class DigitalCertificates
-        {
-            internal static string DefaultCertificateStoreCurrentUser = "Current User";
-            internal static string CertificateInfoIsNotAvailable = "Certificate information is not available.";
-            internal static string CertificateInfoCouldNotBeRetrieved = "Certificate information could not be retrieved";
-        }
-
         internal class ToolStates
         {
             internal static string CodeSignedBuild = @"Signed build";

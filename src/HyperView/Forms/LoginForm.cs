@@ -60,7 +60,7 @@ namespace HyperView.Forms
         private void InitializeFormEvents()
         {
             // Wire up event handlers
-            buttonLogin.Click += ButtonLogin_Click;
+            ButtonLogin.Click += ButtonLogin_Click;
             buttonCancel.Click += ButtonCancel_Click;
             radioWindows.CheckedChanged += RadioAuth_CheckedChanged;
             radioCustom.CheckedChanged += RadioAuth_CheckedChanged;
@@ -97,7 +97,7 @@ namespace HyperView.Forms
                 e.SuppressKeyPress = true;
                 if (radioWindows.Checked)
                 {
-                    buttonLogin.PerformClick();
+                    ButtonLogin.PerformClick();
                 }
                 else
                 {
@@ -117,7 +117,7 @@ namespace HyperView.Forms
                 }
                 else
                 {
-                    buttonLogin.PerformClick();
+                    ButtonLogin.PerformClick();
                 }
             }
         }
@@ -127,7 +127,7 @@ namespace HyperView.Forms
             if (e.KeyCode == Keys.Enter)
             {
                 e.SuppressKeyPress = true;
-                buttonLogin.PerformClick();
+                ButtonLogin.PerformClick();
             }
         }
 
@@ -138,7 +138,7 @@ namespace HyperView.Forms
             // Validate input
             if (string.IsNullOrWhiteSpace(serverName))
             {
-                MessageBox.Show("Please enter a server name or IP address.", Globals.MsgBox.Warning, 
+                MessageBox.Show("Please enter a server name or IP address.", Globals.MsgBox.Warning,
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 textboxServer.Focus();
                 return;
@@ -148,7 +148,7 @@ namespace HyperView.Forms
             {
                 if (string.IsNullOrWhiteSpace(textboxUsername.Text))
                 {
-                    MessageBox.Show("Please enter a username.", Globals.MsgBox.Warning, 
+                    MessageBox.Show("Please enter a username.", Globals.MsgBox.Warning,
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     textboxUsername.Focus();
                     return;
@@ -156,7 +156,7 @@ namespace HyperView.Forms
 
                 if (string.IsNullOrWhiteSpace(textboxPassword.Text))
                 {
-                    MessageBox.Show("Please enter a password.", Globals.MsgBox.Warning, 
+                    MessageBox.Show("Please enter a password.", Globals.MsgBox.Warning,
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     textboxPassword.Focus();
                     return;
@@ -174,9 +174,9 @@ namespace HyperView.Forms
             }
 
             // Disable UI and show progress
-            string originalText = buttonLogin.Text;
-            buttonLogin.Text = "Connecting...";
-            buttonLogin.Enabled = false;
+            string originalText = ButtonLogin.Text;
+            ButtonLogin.Text = "Connecting...";
+            ButtonLogin.Enabled = false;
             this.Cursor = Cursors.WaitCursor;
 
             try
@@ -200,12 +200,12 @@ namespace HyperView.Forms
 
                 if (connectionResult.Success)
                 {
-                    string connectedUser = useWindowsAuth 
-                        ? WindowsIdentity.GetCurrent().Name 
+                    string connectedUser = useWindowsAuth
+                        ? WindowsIdentity.GetCurrent().Name
                         : textboxUsername.Text.Trim();
-                    
-                    string connectionType = useWindowsAuth 
-                        ? "Windows Authentication" 
+
+                    string connectionType = useWindowsAuth
+                        ? "Windows Authentication"
                         : "Custom Credentials";
 
                     // Store result for legacy compatibility
@@ -222,25 +222,25 @@ namespace HyperView.Forms
 
                     // Initialize global session context for reuse across the application
                     SessionContext.Initialize(
-                        serverName, 
-                        useWindowsAuth, 
-                        credentials, 
-                        connectedUser, 
-                        connectionType, 
+                        serverName,
+                        useWindowsAuth,
+                        credentials,
+                        connectedUser,
+                        connectionType,
                         connectionResult.VMCount,
                         connectionResult.IsLocal
                     );
 
-                    FileLogger.Message($"Login successful for '{serverName}' as '{connectedUser}'", 
+                    FileLogger.Message($"Login successful for '{serverName}' as '{connectedUser}'",
                         FileLogger.EventType.Information, 1016);
 
                     // Hide login form and show main form
                     this.Hide();
-                    
+
                     using (MainForm mainForm = new MainForm())
                     {
                         var mainResult = mainForm.ShowDialog();
-                        
+
                         // If main form closes, clear session and close application
                         if (mainResult == DialogResult.OK || mainResult == DialogResult.Cancel)
                         {
@@ -266,14 +266,14 @@ namespace HyperView.Forms
                         {
                             try
                             {
-                                FileLogger.Message("User requested application restart with elevation", 
+                                FileLogger.Message("User requested application restart with elevation",
                                     FileLogger.EventType.Information, 1000);
                                 ApplicationFunctions.RestartAsAdmin();
                                 Application.Exit();
                             }
                             catch (Exception ex)
                             {
-                                FileLogger.Message($"Failed to start as admin: {ex.Message}", 
+                                FileLogger.Message($"Failed to start as admin: {ex.Message}",
                                     FileLogger.EventType.Error, 1001);
                                 MessageBox.Show($"Failed to restart as administrator: {ex.Message}",
                                     "Elevation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -300,8 +300,8 @@ namespace HyperView.Forms
             }
             finally
             {
-                buttonLogin.Text = originalText;
-                buttonLogin.Enabled = true;
+                ButtonLogin.Text = originalText;
+                ButtonLogin.Enabled = true;
                 this.Cursor = Cursors.Default;
             }
         }
@@ -331,7 +331,7 @@ namespace HyperView.Forms
                 {
                     bool isLocal = IsLocalComputer(serverName);
 
-                    FileLogger.Message($"Testing connection to '{serverName}' (Local: {isLocal})...", 
+                    FileLogger.Message($"Testing connection to '{serverName}' (Local: {isLocal})...",
                         FileLogger.EventType.Information, 1003);
 
                     if (isLocal)
@@ -345,12 +345,12 @@ namespace HyperView.Forms
                 }
                 catch (Exception ex)
                 {
-                    FileLogger.Message($"Connection test exception: {ex.Message}", 
+                    FileLogger.Message($"Connection test exception: {ex.Message}",
                         FileLogger.EventType.Error, 1004);
-                    return new ConnectionTestResult 
-                    { 
-                        Success = false, 
-                        Error = ex.Message 
+                    return new ConnectionTestResult
+                    {
+                        Success = false,
+                        Error = ex.Message
                     };
                 }
             });
@@ -364,7 +364,7 @@ namespace HyperView.Forms
             computerName = computerName.Trim().ToLower();
 
             // Check common local names
-            if (computerName == "." || computerName == "localhost" || 
+            if (computerName == "." || computerName == "localhost" ||
                 computerName == "127.0.0.1" || computerName == "::1")
                 return true;
 
@@ -430,12 +430,12 @@ namespace HyperView.Forms
                                     var error = ps.Streams.Error[0];
                                     string errorMessage = error.Exception?.Message ?? error.ToString();
 
-                                    FileLogger.Message($"Local Hyper-V test error: {errorMessage}", 
+                                    FileLogger.Message($"Local Hyper-V test error: {errorMessage}",
                                         FileLogger.EventType.Error, 1017);
 
                                     // Check if it's an elevation/permission issue
                                     if (errorMessage.Contains("required permission") ||
-                                        errorMessage.Contains("Access is denied") || 
+                                        errorMessage.Contains("Access is denied") ||
                                         errorMessage.Contains("Administrator") ||
                                         errorMessage.Contains("authorization policy") ||
                                         errorMessage.Contains("elevation"))
@@ -474,12 +474,12 @@ namespace HyperView.Forms
                             {
                                 string errorMessage = ex.Message;
 
-                                FileLogger.Message($"Local Hyper-V test exception: {errorMessage}", 
+                                FileLogger.Message($"Local Hyper-V test exception: {errorMessage}",
                                     FileLogger.EventType.Error, 1018);
 
                                 // Check if it's an elevation/permission issue
                                 if (errorMessage.Contains("required permission") ||
-                                    errorMessage.Contains("Access is denied") || 
+                                    errorMessage.Contains("Access is denied") ||
                                     errorMessage.Contains("Administrator") ||
                                     errorMessage.Contains("authorization policy") ||
                                     errorMessage.Contains("elevation"))
@@ -513,7 +513,7 @@ namespace HyperView.Forms
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Local Hyper-V test error: {ex.Message}", 
+                FileLogger.Message($"Local Hyper-V test error: {ex.Message}",
                     FileLogger.EventType.Error, 1006);
                 return new ConnectionTestResult
                 {
@@ -527,7 +527,7 @@ namespace HyperView.Forms
         {
             try
             {
-                FileLogger.Message($"Testing remote connection to '{serverName}' (Remote) with credentials of {credential?.UserName ?? "Windows Authentication"}", 
+                FileLogger.Message($"Testing remote connection to '{serverName}' (Remote) with credentials of {credential?.UserName ?? "Windows Authentication"}",
                     FileLogger.EventType.Information, 1007);
 
                 // Test basic connectivity
@@ -605,7 +605,7 @@ namespace HyperView.Forms
 
                                 if (available)
                                 {
-                                    FileLogger.Message($"Remote Hyper-V access successful. Found {vmCount} VMs.", 
+                                    FileLogger.Message($"Remote Hyper-V access successful. Found {vmCount} VMs.",
                                         FileLogger.EventType.Information, 1008);
 
                                     return new ConnectionTestResult
@@ -636,7 +636,7 @@ namespace HyperView.Forms
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Remote connection test error: {ex.Message}", 
+                FileLogger.Message($"Remote connection test error: {ex.Message}",
                     FileLogger.EventType.Error, 1009);
                 return new ConnectionTestResult
                 {
@@ -705,7 +705,7 @@ namespace HyperView.Forms
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Failed to save credentials: {ex.Message}", 
+                FileLogger.Message($"Failed to save credentials: {ex.Message}",
                     FileLogger.EventType.Error, 1011);
             }
         }
@@ -747,7 +747,7 @@ namespace HyperView.Forms
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Failed to load credentials: {ex.Message}", 
+                FileLogger.Message($"Failed to load credentials: {ex.Message}",
                     FileLogger.EventType.Warning, 1013);
                 // Silently fail - credentials might be corrupted or from different user
             }
@@ -767,7 +767,7 @@ namespace HyperView.Forms
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Failed to clear credentials: {ex.Message}", 
+                FileLogger.Message($"Failed to clear credentials: {ex.Message}",
                     FileLogger.EventType.Warning, 1015);
             }
         }

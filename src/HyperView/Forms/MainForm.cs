@@ -362,7 +362,6 @@ namespace HyperView
             }
         }
 
-
         private string FormatTimeSpan(TimeSpan timeSpan)
         {
             if (timeSpan.TotalDays >= 1)

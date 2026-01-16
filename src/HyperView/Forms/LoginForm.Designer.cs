@@ -34,7 +34,7 @@
             textboxServer = new TextBox();
             groupAuth = new GroupBox();
             buttonCancel = new Button();
-            buttonLogin = new Button();
+            ButtonLogin = new Button();
             checkboxRemember = new CheckBox();
             labelPassword = new Label();
             labelUsername = new Label();
@@ -86,7 +86,7 @@
             // groupAuth
             // 
             groupAuth.Controls.Add(buttonCancel);
-            groupAuth.Controls.Add(buttonLogin);
+            groupAuth.Controls.Add(ButtonLogin);
             groupAuth.Controls.Add(checkboxRemember);
             groupAuth.Controls.Add(labelPassword);
             groupAuth.Controls.Add(labelUsername);
@@ -111,14 +111,15 @@
             buttonCancel.Text = "Cancel";
             buttonCancel.UseVisualStyleBackColor = true;
             // 
-            // buttonLogin
+            // ButtonLogin
             // 
-            buttonLogin.Location = new Point(236, 176);
-            buttonLogin.Name = "buttonLogin";
-            buttonLogin.Size = new Size(75, 23);
-            buttonLogin.TabIndex = 7;
-            buttonLogin.Text = "Login";
-            buttonLogin.UseVisualStyleBackColor = true;
+            ButtonLogin.Location = new Point(236, 176);
+            ButtonLogin.Name = "ButtonLogin";
+            ButtonLogin.Size = new Size(75, 23);
+            ButtonLogin.TabIndex = 7;
+            ButtonLogin.Text = "Login";
+            ButtonLogin.UseVisualStyleBackColor = true;
+            ButtonLogin.Click += ButtonLogin_Click;
             // 
             // checkboxRemember
             // 
@@ -229,7 +230,7 @@
         private TextBox textboxPassword;
         private TextBox textboxUsername;
         private Button buttonCancel;
-        private Button buttonLogin;
+        private Button ButtonLogin;
         private CheckBox checkboxRemember;
     }
 }
