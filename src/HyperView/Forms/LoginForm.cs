@@ -65,19 +65,13 @@ namespace HyperView.Forms
 
         private void InitializeFormEvents()
         {
-            // Wire up event handlers that are NOT in the Designer
-            buttonCancel.Click += ButtonCancel_Click;
-            radioWindows.CheckedChanged += RadioAuth_CheckedChanged;
-            radioCustom.CheckedChanged += RadioAuth_CheckedChanged;
-
-            // Note: The following are already wired in Designer.cs:
-            // - ButtonLogin.Click
-            // - textboxServer.KeyDown
-            // - textboxUsername.KeyDown
-            // - textboxPassword.KeyDown
-
             // Set password char
             textboxPassword.UseSystemPasswordChar = true;
+
+            // Setup tooltip for Windows authentication radio button to show current user
+            ToolTip toolTip = new ToolTip();
+            toolTip.SetToolTip(radioWindows, 
+                $"Connect using your current Windows credentials: {WindowsIdentity.GetCurrent().Name}");
 
             // Update UI based on initial selection
             RadioAuth_CheckedChanged(null, null);
