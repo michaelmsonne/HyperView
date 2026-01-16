@@ -28,7 +28,7 @@ namespace HyperView.Class
         // Get logfile path
         public static string GetLogPath(string df)
         {
-            return FileManager.LogFilePath + @"\" + Globals.ToolName.SignToolGui + " Log " + df + ".log";
+            return FileManager.LogFilePath + @"\" + Globals.ToolName.HyperViewGui + " Log " + df + ".log";
         }
 
         // Get datetime
@@ -168,9 +168,9 @@ namespace HyperView.Class
                 if (type != EventType.Error && WriteOnlyErrorsToEventLog)
                     return;
                 var eventLog = new EventLog("");
-                if (!EventLog.SourceExists(Globals.ToolName.SignToolGui))
-                    EventLog.CreateEventSource(Globals.ToolName.SignToolGui, "Application");
-                eventLog.Source = Globals.ToolName.SignToolGui;
+                if (!EventLog.SourceExists(Globals.ToolName.HyperViewGui))
+                    EventLog.CreateEventSource(Globals.ToolName.HyperViewGui, "Application");
+                eventLog.Source = Globals.ToolName.HyperViewGui;
                 eventLog.EnableRaisingEvents = true;
                 var type1 = EventLogEntryType.Error;
                 switch (type)

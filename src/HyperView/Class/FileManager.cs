@@ -20,7 +20,7 @@ namespace HyperView.Class
             get
             {
                 // Path to the program data folder
-                var programDataFilePathvar = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\SignToolGUI";
+                var programDataFilePathvar = $@"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\{Globals.ToolName.HyperView}";
                 return programDataFilePathvar;
             }
         }

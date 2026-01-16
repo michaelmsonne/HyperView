@@ -8,8 +8,8 @@ namespace HyperView.Class
     {
         internal class ToolName
         {
-            internal static string SignTool = "HyperView";
-            internal static string SignToolGui = "HyperView GUI";
+            internal static string HyperView = "HyperView";
+            internal static string HyperViewGui = "HyperView GUI";
         }
 
         internal class MsgBox

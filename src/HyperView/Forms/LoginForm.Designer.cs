@@ -28,12 +28,204 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Text = "LoginForm";
+            labelLoginFormToolName = new Label();
+            pictureBox1 = new PictureBox();
+            labelServer = new Label();
+            textboxServer = new TextBox();
+            groupAuth = new GroupBox();
+            buttonCancel = new Button();
+            buttonLogin = new Button();
+            checkboxRemember = new CheckBox();
+            labelPassword = new Label();
+            labelUsername = new Label();
+            textBox2 = new TextBox();
+            textBox1 = new TextBox();
+            radioCustom = new RadioButton();
+            radioWindows = new RadioButton();
+            ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+            groupAuth.SuspendLayout();
+            SuspendLayout();
+            // 
+            // labelLoginFormToolName
+            // 
+            labelLoginFormToolName.AutoSize = true;
+            labelLoginFormToolName.Font = new Font("Segoe UI", 15.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            labelLoginFormToolName.Location = new Point(133, 78);
+            labelLoginFormToolName.Name = "labelLoginFormToolName";
+            labelLoginFormToolName.Size = new Size(135, 30);
+            labelLoginFormToolName.TabIndex = 0;
+            labelLoginFormToolName.Text = "%toolname%";
+            // 
+            // pictureBox1
+            // 
+            pictureBox1.Image = Properties.Resources.hyper_v;
+            pictureBox1.Location = new Point(30, 46);
+            pictureBox1.Name = "pictureBox1";
+            pictureBox1.Size = new Size(87, 90);
+            pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
+            pictureBox1.TabIndex = 1;
+            pictureBox1.TabStop = false;
+            // 
+            // labelServer
+            // 
+            labelServer.AutoSize = true;
+            labelServer.Location = new Point(21, 170);
+            labelServer.Name = "labelServer";
+            labelServer.Size = new Size(83, 15);
+            labelServer.TabIndex = 2;
+            labelServer.Text = "Server IP/DNS:";
+            // 
+            // textboxServer
+            // 
+            textboxServer.Location = new Point(110, 167);
+            textboxServer.Name = "textboxServer";
+            textboxServer.Size = new Size(292, 23);
+            textboxServer.TabIndex = 3;
+            // 
+            // groupAuth
+            // 
+            groupAuth.Controls.Add(buttonCancel);
+            groupAuth.Controls.Add(buttonLogin);
+            groupAuth.Controls.Add(checkboxRemember);
+            groupAuth.Controls.Add(labelPassword);
+            groupAuth.Controls.Add(labelUsername);
+            groupAuth.Controls.Add(textBox2);
+            groupAuth.Controls.Add(textBox1);
+            groupAuth.Controls.Add(radioCustom);
+            groupAuth.Controls.Add(radioWindows);
+            groupAuth.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            groupAuth.Location = new Point(12, 205);
+            groupAuth.Name = "groupAuth";
+            groupAuth.Size = new Size(407, 209);
+            groupAuth.TabIndex = 4;
+            groupAuth.TabStop = false;
+            groupAuth.Text = "Authentication Method";
+            // 
+            // buttonCancel
+            // 
+            buttonCancel.Location = new Point(98, 176);
+            buttonCancel.Name = "buttonCancel";
+            buttonCancel.Size = new Size(75, 23);
+            buttonCancel.TabIndex = 8;
+            buttonCancel.Text = "Cancel";
+            buttonCancel.UseVisualStyleBackColor = true;
+            // 
+            // buttonLogin
+            // 
+            buttonLogin.Location = new Point(236, 176);
+            buttonLogin.Name = "buttonLogin";
+            buttonLogin.Size = new Size(75, 23);
+            buttonLogin.TabIndex = 7;
+            buttonLogin.Text = "Login";
+            buttonLogin.UseVisualStyleBackColor = true;
+            // 
+            // checkboxRemember
+            // 
+            checkboxRemember.AutoSize = true;
+            checkboxRemember.Font = new Font("Segoe UI", 9F);
+            checkboxRemember.Location = new Point(122, 143);
+            checkboxRemember.Name = "checkboxRemember";
+            checkboxRemember.Size = new Size(208, 19);
+            checkboxRemember.TabIndex = 6;
+            checkboxRemember.Text = "Remember credentials (encrypted)";
+            checkboxRemember.UseVisualStyleBackColor = true;
+            // 
+            // labelPassword
+            // 
+            labelPassword.AutoSize = true;
+            labelPassword.Font = new Font("Segoe UI", 9F);
+            labelPassword.Location = new Point(37, 111);
+            labelPassword.Name = "labelPassword";
+            labelPassword.Size = new Size(60, 15);
+            labelPassword.TabIndex = 5;
+            labelPassword.Text = "Password:";
+            // 
+            // labelUsername
+            // 
+            labelUsername.AutoSize = true;
+            labelUsername.Font = new Font("Segoe UI", 9F);
+            labelUsername.Location = new Point(37, 79);
+            labelUsername.Name = "labelUsername";
+            labelUsername.Size = new Size(63, 15);
+            labelUsername.TabIndex = 4;
+            labelUsername.Text = "Username:";
+            // 
+            // textBox2
+            // 
+            textBox2.Font = new Font("Segoe UI", 9F);
+            textBox2.Location = new Point(106, 108);
+            textBox2.Name = "textBox2";
+            textBox2.Size = new Size(284, 23);
+            textBox2.TabIndex = 3;
+            // 
+            // textBox1
+            // 
+            textBox1.Font = new Font("Segoe UI", 9F);
+            textBox1.Location = new Point(106, 79);
+            textBox1.Name = "textBox1";
+            textBox1.Size = new Size(284, 23);
+            textBox1.TabIndex = 2;
+            // 
+            // radioCustom
+            // 
+            radioCustom.AutoSize = true;
+            radioCustom.Font = new Font("Segoe UI", 9F);
+            radioCustom.Location = new Point(23, 50);
+            radioCustom.Name = "radioCustom";
+            radioCustom.Size = new Size(147, 19);
+            radioCustom.TabIndex = 1;
+            radioCustom.TabStop = true;
+            radioCustom.Text = "Use specific credentials";
+            radioCustom.UseVisualStyleBackColor = true;
+            // 
+            // radioWindows
+            // 
+            radioWindows.AutoSize = true;
+            radioWindows.Checked = true;
+            radioWindows.Font = new Font("Segoe UI", 9F);
+            radioWindows.Location = new Point(23, 25);
+            radioWindows.Name = "radioWindows";
+            radioWindows.Size = new Size(238, 19);
+            radioWindows.TabIndex = 0;
+            radioWindows.TabStop = true;
+            radioWindows.Text = "Use current Windows session credentials";
+            radioWindows.UseVisualStyleBackColor = true;
+            // 
+            // LoginForm
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(432, 430);
+            Controls.Add(groupAuth);
+            Controls.Add(textboxServer);
+            Controls.Add(labelServer);
+            Controls.Add(pictureBox1);
+            Controls.Add(labelLoginFormToolName);
+            Name = "LoginForm";
+            StartPosition = FormStartPosition.CenterScreen;
+            Text = "LoginForm";
+            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
+            groupAuth.ResumeLayout(false);
+            groupAuth.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
+
+        private Label labelLoginFormToolName;
+        private PictureBox pictureBox1;
+        private Label labelServer;
+        private TextBox textboxServer;
+        private GroupBox groupAuth;
+        private RadioButton radioCustom;
+        private RadioButton radioWindows;
+        private Label labelPassword;
+        private Label labelUsername;
+        private TextBox textBox2;
+        private TextBox textBox1;
+        private Button buttonCancel;
+        private Button buttonLogin;
+        private CheckBox checkboxRemember;
     }
 }

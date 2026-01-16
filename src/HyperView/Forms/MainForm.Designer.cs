@@ -72,7 +72,7 @@
             datagridviewVMOverView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             datagridviewVMOverView.Location = new Point(6, 38);
             datagridviewVMOverView.Name = "datagridviewVMOverView";
-            datagridviewVMOverView.Size = new Size(1601, 725);
+            datagridviewVMOverView.Size = new Size(1601, 800);
             datagridviewVMOverView.TabIndex = 0;
             // 
             // tabcontrolMainForm
@@ -97,7 +97,7 @@
             tabcontrolMainForm.Location = new Point(12, 27);
             tabcontrolMainForm.Name = "tabcontrolMainForm";
             tabcontrolMainForm.SelectedIndex = 0;
-            tabcontrolMainForm.Size = new Size(1621, 797);
+            tabcontrolMainForm.Size = new Size(1621, 872);
             tabcontrolMainForm.TabIndex = 1;
             // 
             // tabpagehvOverview
@@ -106,7 +106,7 @@
             tabpagehvOverview.Location = new Point(4, 24);
             tabpagehvOverview.Name = "tabpagehvOverview";
             tabpagehvOverview.Padding = new Padding(3);
-            tabpagehvOverview.Size = new Size(1613, 769);
+            tabpagehvOverview.Size = new Size(1613, 844);
             tabpagehvOverview.TabIndex = 0;
             tabpagehvOverview.Text = "hvOverview";
             tabpagehvOverview.UseVisualStyleBackColor = true;
@@ -341,7 +341,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1645, 836);
+            ClientSize = new Size(1645, 999);
             Controls.Add(tabcontrolMainForm);
             Controls.Add(menuStripTopMainForm);
             MainMenuStrip = menuStripTopMainForm;
