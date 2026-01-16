@@ -81,6 +81,7 @@
             textboxServer.Name = "textboxServer";
             textboxServer.Size = new Size(292, 23);
             textboxServer.TabIndex = 3;
+            textboxServer.TextChanged += textboxServer_TextChanged;
             textboxServer.KeyDown += TextboxServer_KeyDown;
             // 
             // groupAuth

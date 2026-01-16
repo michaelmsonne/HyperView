@@ -24,6 +24,9 @@ namespace HyperView.Forms
         }
 
         public LoginResult Result { get; private set; }
+        private string _lastServerChecked = string.Empty;
+        private bool _isInitializing = true;
+        private bool _isConnecting = false; // Prevent double login attempts
 
         public LoginForm()
         {
@@ -32,6 +35,9 @@ namespace HyperView.Forms
             SetDefaultServer();
             LoadSavedCredentials();
             SetToolName();
+            
+            // Mark initialization as complete
+            _isInitializing = false;
         }
 
         private void SetDefaultServer()
@@ -133,6 +139,16 @@ namespace HyperView.Forms
 
         private async void ButtonLogin_Click(object sender, EventArgs e)
         {
+            // Prevent double-click or multiple simultaneous login attempts
+            if (_isConnecting)
+            {
+                FileLogger.Message($"Login attempt already in progress, ignoring duplicate request",
+                    FileLogger.EventType.Warning, 1042);
+                return;
+            }
+
+            _isConnecting = true;
+
             string serverName = textboxServer.Text.Trim();
 
             // Validate input
@@ -141,6 +157,7 @@ namespace HyperView.Forms
                 MessageBox.Show("Please enter a server name or IP address.", Globals.MsgBox.Warning,
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 textboxServer.Focus();
+                _isConnecting = false;
                 return;
             }
 
@@ -151,6 +168,7 @@ namespace HyperView.Forms
                     MessageBox.Show("Please enter a username.", Globals.MsgBox.Warning,
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     textboxUsername.Focus();
+                    _isConnecting = false;
                     return;
                 }
 
@@ -159,6 +177,7 @@ namespace HyperView.Forms
                     MessageBox.Show("Please enter a password.", Globals.MsgBox.Warning,
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     textboxPassword.Focus();
+                    _isConnecting = false;
                     return;
                 }
             }
@@ -235,11 +254,20 @@ namespace HyperView.Forms
                         FileLogger.EventType.Information, 1016);
 
                     // Hide login form and show main form
+                    FileLogger.Message($"Hiding login form and showing MainForm...",
+                        FileLogger.EventType.Information, 1039);
+                        
                     this.Hide();
 
                     using (MainForm mainForm = new MainForm())
                     {
+                        FileLogger.Message($"MainForm created, showing dialog...",
+                            FileLogger.EventType.Information, 1040);
+                            
                         var mainResult = mainForm.ShowDialog();
+
+                        FileLogger.Message($"MainForm closed with result: {mainResult}",
+                            FileLogger.EventType.Information, 1041);
 
                         // If main form closes, clear session and close application
                         if (mainResult == DialogResult.OK || mainResult == DialogResult.Cancel)
@@ -303,6 +331,7 @@ namespace HyperView.Forms
                 ButtonLogin.Text = originalText;
                 ButtonLogin.Enabled = true;
                 this.Cursor = Cursors.Default;
+                _isConnecting = false; // Reset the flag
             }
         }
 
@@ -404,25 +433,42 @@ namespace HyperView.Forms
         {
             try
             {
+                FileLogger.Message($"Starting local Hyper-V module check...",
+                    FileLogger.EventType.Information, 1030);
+                
                 using (Runspace runspace = RunspaceFactory.CreateRunspace())
                 {
                     runspace.Open();
+                    FileLogger.Message($"Local runspace opened successfully",
+                        FileLogger.EventType.Information, 1031);
 
                     using (PowerShell ps = PowerShell.Create())
                     {
                         ps.Runspace = runspace;
                         ps.AddScript("Get-Module -ListAvailable -Name Hyper-V");
 
+                        FileLogger.Message($"Checking for Hyper-V module...",
+                            FileLogger.EventType.Information, 1032);
+                        
                         var moduleResult = ps.Invoke();
 
                         if (moduleResult != null && moduleResult.Count > 0)
                         {
+                            FileLogger.Message($"Hyper-V module found, testing VM access...",
+                                FileLogger.EventType.Information, 1033);
+                            
                             ps.Commands.Clear();
                             ps.AddScript("Get-VM -ErrorAction Stop");
 
                             try
                             {
+                                FileLogger.Message($"Executing Get-VM command...",
+                                    FileLogger.EventType.Information, 1034);
+                                    
                                 var vmResult = ps.Invoke();
+
+                                FileLogger.Message($"Get-VM command completed, checking for errors...",
+                                    FileLogger.EventType.Information, 1035);
 
                                 // Check for errors in the error stream
                                 if (ps.HadErrors)
@@ -440,6 +486,9 @@ namespace HyperView.Forms
                                         errorMessage.Contains("authorization policy") ||
                                         errorMessage.Contains("elevation"))
                                     {
+                                        FileLogger.Message($"Access denied detected - elevation required",
+                                            FileLogger.EventType.Warning, 1036);
+                                            
                                         return new ConnectionTestResult
                                         {
                                             Success = false,
@@ -458,10 +507,8 @@ namespace HyperView.Forms
 
                                 int vmCount = vmResult?.Count ?? 0;
 
-                                FileLogger.Message($"Local Hyper-V access successful.",
+                                FileLogger.Message($"Local Hyper-V access successful. Found {vmCount} VMs.",
                                     FileLogger.EventType.Information, 1005);
-                                // FileLogger.Message($"Local Hyper-V access successful. Found {vmCount} VMs.", 
-                                //    FileLogger.EventType.Information, 1005);
 
                                 return new ConnectionTestResult
                                 {
@@ -474,7 +521,7 @@ namespace HyperView.Forms
                             {
                                 string errorMessage = ex.Message;
 
-                                FileLogger.Message($"Local Hyper-V test exception: {errorMessage}",
+                                FileLogger.Message($"Local Hyper-V test exception: {ex.GetType().Name} - {errorMessage}",
                                     FileLogger.EventType.Error, 1018);
 
                                 // Check if it's an elevation/permission issue
@@ -484,6 +531,9 @@ namespace HyperView.Forms
                                     errorMessage.Contains("authorization policy") ||
                                     errorMessage.Contains("elevation"))
                                 {
+                                    FileLogger.Message($"Access denied detected in exception - elevation required",
+                                        FileLogger.EventType.Warning, 1037);
+                                        
                                     return new ConnectionTestResult
                                     {
                                         Success = false,
@@ -502,6 +552,9 @@ namespace HyperView.Forms
                         }
                         else
                         {
+                            FileLogger.Message($"Hyper-V module not found on local system",
+                                FileLogger.EventType.Error, 1038);
+                                
                             return new ConnectionTestResult
                             {
                                 Success = false,
@@ -513,8 +566,11 @@ namespace HyperView.Forms
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Local Hyper-V test error: {ex.Message}",
+                FileLogger.Message($"Local Hyper-V test fatal error: {ex.GetType().Name} - {ex.Message}",
                     FileLogger.EventType.Error, 1006);
+                FileLogger.Message($"Stack trace: {ex.StackTrace}",
+                    FileLogger.EventType.Error, 1006);
+                    
                 return new ConnectionTestResult
                 {
                     Success = false,
@@ -525,6 +581,9 @@ namespace HyperView.Forms
 
         private ConnectionTestResult TestRemoteHyperV(string serverName, PSCredential credential)
         {
+            Runspace tempRunspace = null;
+            PSObject tempSession = null;
+            
             try
             {
                 FileLogger.Message($"Testing remote connection to '{serverName}' (Remote) with credentials of {credential?.UserName ?? "Windows Authentication"}",
@@ -542,107 +601,188 @@ namespace HyperView.Forms
                 }
 
                 // Test PowerShell remoting
-                using (Runspace runspace = RunspaceFactory.CreateRunspace())
+                tempRunspace = RunspaceFactory.CreateRunspace();
+                tempRunspace.Open();
+
+                using (PowerShell ps = PowerShell.Create())
                 {
-                    runspace.Open();
+                    ps.Runspace = tempRunspace;
 
-                    using (PowerShell ps = PowerShell.Create())
+                    // Build New-PSSession command
+                    ps.AddCommand("New-PSSession")
+                      .AddParameter("ComputerName", serverName)
+                      .AddParameter("ErrorAction", "Stop");
+
+                    if (credential != null)
                     {
-                        ps.Runspace = runspace;
+                        ps.AddParameter("Credential", credential);
+                    }
 
-                        // Build New-PSSession command
-                        ps.AddCommand("New-PSSession")
-                          .AddParameter("ComputerName", serverName)
-                          .AddParameter("ErrorAction", "Stop");
+                    FileLogger.Message($"Creating PowerShell session to '{serverName}'...",
+                        FileLogger.EventType.Information, 1022);
 
-                        if (credential != null)
+                    var sessionResult = ps.Invoke();
+
+                    if (ps.HadErrors)
+                    {
+                        var error = ps.Streams.Error[0];
+                        string errorMsg = error.Exception?.Message ?? error.ToString();
+                        
+                        FileLogger.Message($"PowerShell session creation failed: {errorMsg}",
+                            FileLogger.EventType.Error, 1023);
+                        
+                        return new ConnectionTestResult
                         {
-                            ps.AddParameter("Credential", credential);
-                        }
+                            Success = false,
+                            Error = $"Failed to create PowerShell session: {errorMsg}"
+                        };
+                    }
 
-                        var sessionResult = ps.Invoke();
-
-                        if (ps.HadErrors)
-                        {
-                            var error = ps.Streams.Error[0];
-                            return new ConnectionTestResult
-                            {
-                                Success = false,
-                                Error = $"Failed to create PowerShell session: {error.Exception.Message}"
-                            };
-                        }
-
-                        if (sessionResult != null && sessionResult.Count > 0)
-                        {
-                            var session = sessionResult[0];
-
-                            // Test Hyper-V availability
-                            ps.Commands.Clear();
-                            ps.AddCommand("Invoke-Command")
-                              .AddParameter("Session", session)
-                              .AddParameter("ScriptBlock", ScriptBlock.Create(@"
-                                try {
-                                    $module = Get-Module -ListAvailable -Name Hyper-V -ErrorAction SilentlyContinue
-                                    if ($module) {
-                                        $vms = Get-VM -ErrorAction SilentlyContinue
-                                        return @{ Available = $true; VMCount = ($vms | Measure-Object).Count }
-                                    }
-                                    return @{ Available = $false; VMCount = 0 }
-                                }
-                                catch {
-                                    return @{ Available = $false; Error = $_.Exception.Message }
-                                }
-                            "));
-
-                            var hyperVResult = ps.Invoke();
-
-                            if (hyperVResult != null && hyperVResult.Count > 0)
-                            {
-                                var result = (PSObject)hyperVResult[0];
-                                var hashtable = (System.Collections.Hashtable)result.BaseObject;
-                                bool available = (bool)hashtable["Available"];
-                                int vmCount = (int)hashtable["VMCount"];
-
-                                if (available)
-                                {
-                                    FileLogger.Message($"Remote Hyper-V access successful. Found {vmCount} VMs.",
-                                        FileLogger.EventType.Information, 1008);
-
-                                    return new ConnectionTestResult
-                                    {
-                                        Success = true,
-                                        VMCount = vmCount,
-                                        IsLocal = false
-                                    };
-                                }
-                                else
-                                {
-                                    return new ConnectionTestResult
-                                    {
-                                        Success = false,
-                                        Error = $"Hyper-V module not available or accessible on '{serverName}'"
-                                    };
-                                }
-                            }
-                        }
-
+                    if (sessionResult == null || sessionResult.Count == 0)
+                    {
+                        FileLogger.Message($"PowerShell session creation returned no results",
+                            FileLogger.EventType.Error, 1024);
+                            
                         return new ConnectionTestResult
                         {
                             Success = false,
                             Error = $"Failed to create PowerShell session to '{serverName}'"
                         };
                     }
+
+                    tempSession = sessionResult[0];
+                    FileLogger.Message($"PowerShell session created successfully",
+                        FileLogger.EventType.Information, 1025);
+
+                    // Test Hyper-V availability
+                    ps.Commands.Clear();
+                    ps.AddCommand("Invoke-Command")
+                      .AddParameter("Session", tempSession)
+                      .AddParameter("ScriptBlock", ScriptBlock.Create(@"
+                        try {
+                            $module = Get-Module -ListAvailable -Name Hyper-V -ErrorAction SilentlyContinue
+                            if ($module) {
+                                $vms = Get-VM -ErrorAction SilentlyContinue
+                                return @{ Available = $true; VMCount = ($vms | Measure-Object).Count }
+                            }
+                            return @{ Available = $false; VMCount = 0 }
+                        }
+                        catch {
+                            return @{ Available = $false; Error = $_.Exception.Message }
+                        }
+                    "));
+
+                    FileLogger.Message($"Testing Hyper-V availability on '{serverName}'...",
+                        FileLogger.EventType.Information, 1026);
+
+                    var hyperVResult = ps.Invoke();
+
+                    if (ps.HadErrors)
+                    {
+                        var error = ps.Streams.Error[0];
+                        string errorMsg = error.Exception?.Message ?? error.ToString();
+                        
+                        FileLogger.Message($"Hyper-V test command failed: {errorMsg}",
+                            FileLogger.EventType.Error, 1027);
+                        
+                        return new ConnectionTestResult
+                        {
+                            Success = false,
+                            Error = $"Failed to test Hyper-V on '{serverName}': {errorMsg}"
+                        };
+                    }
+
+                    if (hyperVResult != null && hyperVResult.Count > 0)
+                    {
+                        var result = (PSObject)hyperVResult[0];
+                        var hashtable = (System.Collections.Hashtable)result.BaseObject;
+                        bool available = (bool)hashtable["Available"];
+                        int vmCount = (int)hashtable["VMCount"];
+
+                        if (available)
+                        {
+                            FileLogger.Message($"Remote Hyper-V access successful. Found {vmCount} VMs.",
+                                FileLogger.EventType.Information, 1008);
+
+                            return new ConnectionTestResult
+                            {
+                                Success = true,
+                                VMCount = vmCount,
+                                IsLocal = false
+                            };
+                        }
+                        else
+                        {
+                            string error = hashtable.ContainsKey("Error") ? hashtable["Error"]?.ToString() : "Unknown error";
+                            
+                            FileLogger.Message($"Hyper-V not available on '{serverName}': {error}",
+                                FileLogger.EventType.Warning, 1028);
+                            
+                            return new ConnectionTestResult
+                            {
+                                Success = false,
+                                Error = $"Hyper-V module not available or accessible on '{serverName}'. {error}"
+                            };
+                        }
+                    }
+
+                    FileLogger.Message($"No results returned from Hyper-V test on '{serverName}'",
+                        FileLogger.EventType.Error, 1029);
+                        
+                    return new ConnectionTestResult
+                    {
+                        Success = false,
+                        Error = $"No response from Hyper-V test on '{serverName}'"
+                    };
                 }
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Remote connection test error: {ex.Message}",
+                FileLogger.Message($"Remote connection test exception: {ex.GetType().Name} - {ex.Message}",
                     FileLogger.EventType.Error, 1009);
+                FileLogger.Message($"Stack trace: {ex.StackTrace}",
+                    FileLogger.EventType.Error, 1009);
+                    
                 return new ConnectionTestResult
                 {
                     Success = false,
-                    Error = ex.Message
+                    Error = $"Connection test failed: {ex.Message}"
                 };
+            }
+            finally
+            {
+                // Clean up the temporary session
+                if (tempSession != null && tempRunspace != null)
+                {
+                    try
+                    {
+                        using (PowerShell ps = PowerShell.Create())
+                        {
+                            ps.Runspace = tempRunspace;
+                            ps.AddCommand("Remove-PSSession")
+                              .AddParameter("Session", tempSession);
+                            ps.Invoke();
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore cleanup errors
+                    }
+                }
+                
+                // Clean up the temporary runspace
+                if (tempRunspace != null)
+                {
+                    try
+                    {
+                        tempRunspace.Close();
+                        tempRunspace.Dispose();
+                    }
+                    catch
+                    {
+                        // Ignore cleanup errors
+                    }
+                }
             }
         }
 
@@ -670,6 +810,12 @@ namespace HyperView.Forms
 
         #region Credential Storage
 
+        private class SavedCredential
+        {
+            public string Username { get; set; }
+            public string Password { get; set; }
+        }
+
         private void SaveCredentials(string server, string username, string password)
         {
             try
@@ -679,7 +825,9 @@ namespace HyperView.Forms
                     Directory.CreateDirectory(FileManager.ProgramDataFilePath);
                 }
 
-                string credFile = Path.Combine(FileManager.ProgramDataFilePath, "credentials.dat");
+                // Create a safe filename from the server name
+                string safeServerName = GetSafeFileName(server);
+                string credFile = Path.Combine(FileManager.ProgramDataFilePath, $"cred_{safeServerName}.dat");
 
                 // Encrypt credentials using DPAPI
                 byte[] serverBytes = Encoding.UTF8.GetBytes(server);
@@ -701,7 +849,8 @@ namespace HyperView.Forms
                     writer.Write(encryptedPassword);
                 }
 
-                FileLogger.Message("Credentials saved (encrypted)", FileLogger.EventType.Information, 1010);
+                FileLogger.Message($"Credentials saved (encrypted) for server '{server}'", 
+                    FileLogger.EventType.Information, 1010);
             }
             catch (Exception ex)
             {
@@ -710,10 +859,63 @@ namespace HyperView.Forms
             }
         }
 
+        private SavedCredential LoadServerCredentials(string serverName)
+        {
+            try
+            {
+                // Create a safe filename from the server name
+                string safeServerName = GetSafeFileName(serverName);
+                string credFile = Path.Combine(FileManager.ProgramDataFilePath, $"cred_{safeServerName}.dat");
+
+                if (!File.Exists(credFile))
+                    return null;
+
+                using (FileStream fs = new FileStream(credFile, FileMode.Open, FileAccess.Read))
+                using (BinaryReader reader = new BinaryReader(fs))
+                {
+                    int serverLength = reader.ReadInt32();
+                    byte[] encryptedServer = reader.ReadBytes(serverLength);
+
+                    int usernameLength = reader.ReadInt32();
+                    byte[] encryptedUsername = reader.ReadBytes(usernameLength);
+
+                    int passwordLength = reader.ReadInt32();
+                    byte[] encryptedPassword = reader.ReadBytes(passwordLength);
+
+                    byte[] serverBytes = ProtectedData.Unprotect(encryptedServer, null, DataProtectionScope.CurrentUser);
+                    byte[] usernameBytes = ProtectedData.Unprotect(encryptedUsername, null, DataProtectionScope.CurrentUser);
+                    byte[] passwordBytes = ProtectedData.Unprotect(encryptedPassword, null, DataProtectionScope.CurrentUser);
+
+                    string storedServer = Encoding.UTF8.GetString(serverBytes);
+                    
+                    // Verify the server name matches (security check)
+                    if (!storedServer.Equals(serverName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        FileLogger.Message($"Server name mismatch in credential file for '{serverName}'",
+                            FileLogger.EventType.Warning, 1020);
+                        return null;
+                    }
+
+                    return new SavedCredential
+                    {
+                        Username = Encoding.UTF8.GetString(usernameBytes),
+                        Password = Encoding.UTF8.GetString(passwordBytes)
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Failed to load credentials for '{serverName}': {ex.Message}",
+                    FileLogger.EventType.Warning, 1013);
+                return null;
+            }
+        }
+
         private void LoadSavedCredentials()
         {
             try
             {
+                // Try to load the default/last used credentials file (legacy support)
                 string credFile = Path.Combine(FileManager.ProgramDataFilePath, "credentials.dat");
 
                 if (!File.Exists(credFile))
@@ -742,12 +944,27 @@ namespace HyperView.Forms
                     radioCustom.Checked = true;
                     checkboxRemember.Checked = true;
 
-                    FileLogger.Message("Credentials loaded", FileLogger.EventType.Information, 1012);
+                    FileLogger.Message("Legacy credentials loaded", FileLogger.EventType.Information, 1012);
+
+                    // Migrate to new format
+                    string server = textboxServer.Text;
+                    string username = textboxUsername.Text;
+                    string password = textboxPassword.Text;
+                    SaveCredentials(server, username, password);
+
+                    // Delete old file
+                    try
+                    {
+                        File.Delete(credFile);
+                        FileLogger.Message("Migrated credentials to new server-specific format", 
+                            FileLogger.EventType.Information, 1021);
+                    }
+                    catch { }
                 }
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Failed to load credentials: {ex.Message}",
+                FileLogger.Message($"Failed to load legacy credentials: {ex.Message}",
                     FileLogger.EventType.Warning, 1013);
                 // Silently fail - credentials might be corrupted or from different user
             }
@@ -757,12 +974,20 @@ namespace HyperView.Forms
         {
             try
             {
-                string credFile = Path.Combine(FileManager.ProgramDataFilePath, "credentials.dat");
+                string serverName = textboxServer.Text.Trim();
+                
+                if (string.IsNullOrWhiteSpace(serverName))
+                    return;
+
+                // Delete server-specific credential file
+                string safeServerName = GetSafeFileName(serverName);
+                string credFile = Path.Combine(FileManager.ProgramDataFilePath, $"cred_{safeServerName}.dat");
 
                 if (File.Exists(credFile))
                 {
                     File.Delete(credFile);
-                    FileLogger.Message("Saved credentials cleared", FileLogger.EventType.Information, 1014);
+                    FileLogger.Message($"Saved credentials cleared for server '{serverName}'", 
+                        FileLogger.EventType.Information, 1014);
                 }
             }
             catch (Exception ex)
@@ -772,7 +997,71 @@ namespace HyperView.Forms
             }
         }
 
+        private string GetSafeFileName(string serverName)
+        {
+            // Remove invalid filename characters and convert to safe format
+            string safe = serverName.ToLower();
+            foreach (char c in Path.GetInvalidFileNameChars())
+            {
+                safe = safe.Replace(c, '_');
+            }
+            // Also replace some additional characters that might cause issues
+            safe = safe.Replace('.', '_').Replace(':', '_').Replace('\\', '_').Replace('/', '_');
+            return safe;
+        }
+
         #endregion
+
+        private void textboxServer_TextChanged(object sender, EventArgs e)
+        {
+            // Skip during form initialization
+            if (_isInitializing)
+                return;
+
+            // Trim server name for spaces
+            string serverName = textboxServer.Text.Trim();
+
+            // Try to load saved credentials when server changes
+            if (radioCustom.Checked && serverName.Length > 2 && serverName != _lastServerChecked)
+            {
+                // Update last server checked
+                _lastServerChecked = serverName;
+
+                // Try to load server-specific credentials
+                var savedCreds = LoadServerCredentials(serverName);
+
+                if (savedCreds != null)
+                {
+                    // Add username to UI
+                    textboxUsername.Text = savedCreds.Username;
+                    textboxPassword.Text = savedCreds.Password;
+
+                    // Update UI
+                    checkboxRemember.Checked = true;
+
+                    // Log
+                    FileLogger.Message($"Loading saved credentials for server '{serverName}' into application",
+                        FileLogger.EventType.Information, 1019);
+                }
+                else
+                {
+                    // Clear credentials if no saved credentials found
+                    if (!string.IsNullOrEmpty(textboxUsername.Text) || !string.IsNullOrEmpty(textboxPassword.Text))
+                    {
+                        textboxUsername.Text = string.Empty;
+                        textboxPassword.Text = string.Empty;
+                    }
+
+                    // Update UI
+                    checkboxRemember.Checked = false;
+                }
+            }
+            else if (serverName.Length <= 2)
+            {
+                // Reset check when server name is too short
+                _lastServerChecked = string.Empty;
+            }
+        }
     }
 }
 
