@@ -34,5 +34,12 @@ namespace HyperView.Class
                 return logfilePathvar;
             }
         }
+
+        public static string GenerateDynamicLogName(string logName)
+        {
+            var hostname = Environment.MachineName;
+            var timestamp = DateTime.Now.ToString("ddMMyyyy_HHmmss");
+            return $"{hostname}_{timestamp}_{logName}";
+        }
     }
 }

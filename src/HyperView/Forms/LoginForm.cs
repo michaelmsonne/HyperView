@@ -269,7 +269,7 @@ namespace HyperView.Forms
                             {
                                 FileLogger.Message("User requested application restart with elevation", 
                                     FileLogger.EventType.Information, 1000);
-                                RestartAsAdmin();
+                                ApplicationFunctions.RestartAsAdmin();
                                 Application.Exit();
                             }
                             catch (Exception ex)
@@ -419,11 +419,44 @@ namespace HyperView.Forms
                         if (moduleResult != null && moduleResult.Count > 0)
                         {
                             ps.Commands.Clear();
-                            ps.AddScript("Get-VM -ErrorAction SilentlyContinue");
+                            ps.AddScript("Get-VM -ErrorAction Stop");
 
                             try
                             {
                                 var vmResult = ps.Invoke();
+
+                                // Check for errors in the error stream
+                                if (ps.HadErrors)
+                                {
+                                    var error = ps.Streams.Error[0];
+                                    string errorMessage = error.Exception?.Message ?? error.ToString();
+
+                                    FileLogger.Message($"Local Hyper-V test error: {errorMessage}", 
+                                        FileLogger.EventType.Error, 1017);
+
+                                    // Check if it's an elevation/permission issue
+                                    if (errorMessage.Contains("required permission") ||
+                                        errorMessage.Contains("Access is denied") || 
+                                        errorMessage.Contains("Administrator") ||
+                                        errorMessage.Contains("authorization policy") ||
+                                        errorMessage.Contains("elevation"))
+                                    {
+                                        return new ConnectionTestResult
+                                        {
+                                            Success = false,
+                                            Error = "Access denied. Administrator privileges or membership in the 'Hyper-V Administrators' group is required for local Hyper-V management.",
+                                            RequiresElevation = true,
+                                            CanAutoElevate = true
+                                        };
+                                    }
+
+                                    return new ConnectionTestResult
+                                    {
+                                        Success = false,
+                                        Error = $"Local Hyper-V test failed: {errorMessage}"
+                                    };
+                                }
+
                                 int vmCount = vmResult?.Count ?? 0;
 
                                 FileLogger.Message($"Local Hyper-V access successful. Found {vmCount} VMs.", 
@@ -440,15 +473,20 @@ namespace HyperView.Forms
                             {
                                 string errorMessage = ex.Message;
 
-                                // Check if it's an elevation issue
-                                if (errorMessage.Contains("Access is denied") || 
+                                FileLogger.Message($"Local Hyper-V test exception: {errorMessage}", 
+                                    FileLogger.EventType.Error, 1018);
+
+                                // Check if it's an elevation/permission issue
+                                if (errorMessage.Contains("required permission") ||
+                                    errorMessage.Contains("Access is denied") || 
                                     errorMessage.Contains("Administrator") ||
+                                    errorMessage.Contains("authorization policy") ||
                                     errorMessage.Contains("elevation"))
                                 {
                                     return new ConnectionTestResult
                                     {
                                         Success = false,
-                                        Error = "Access denied. Administrator privileges required for local Hyper-V management.",
+                                        Error = "Access denied. Administrator privileges or membership in the 'Hyper-V Administrators' group is required for local Hyper-V management.",
                                         RequiresElevation = true,
                                         CanAutoElevate = true
                                     };
@@ -627,18 +665,6 @@ namespace HyperView.Forms
             {
                 return false;
             }
-        }
-
-        private void RestartAsAdmin()
-        {
-            var processInfo = new ProcessStartInfo
-            {
-                FileName = Application.ExecutablePath,
-                UseShellExecute = true,
-                Verb = "runas"
-            };
-
-            Process.Start(processInfo);
         }
 
         #region Credential Storage
