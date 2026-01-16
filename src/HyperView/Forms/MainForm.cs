@@ -1,14 +1,134 @@
 using System.Data;
 using System.Management.Automation;
+using System.Management.Automation.Runspaces;
+using HyperView.Class;
 
 namespace HyperView
 {
     public partial class MainForm : Form
     {
+        private PSObject _psSession = null;
+        private Runspace _persistentRunspace = null;
+
         public MainForm()
         {
             InitializeComponent();
+            InitializeSession();
             LoadVMOverview();
+        }
+
+        private void InitializeSession()
+        {
+            try
+            {
+                // Check if we have an active session
+                if (!SessionContext.IsSessionActive())
+                {
+                    MessageBox.Show("No active session found. Please login again.", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    this.DialogResult = DialogResult.Cancel;
+                    this.Close();
+                    return;
+                }
+
+                // For remote connections, create a persistent runspace and PS session
+                if (!SessionContext.IsLocal)
+                {
+                    // Create persistent runspace for remote operations
+                    _persistentRunspace = RunspaceFactory.CreateRunspace();
+                    _persistentRunspace.Open();
+
+                    using (PowerShell ps = PowerShell.Create())
+                    {
+                        ps.Runspace = _persistentRunspace;
+
+                        // Build New-PSSession command
+                        ps.AddCommand("New-PSSession")
+                          .AddParameter("ComputerName", SessionContext.ServerName)
+                          .AddParameter("ErrorAction", "Stop");
+
+                        if (SessionContext.Credentials != null)
+                        {
+                            ps.AddParameter("Credential", SessionContext.Credentials);
+                        }
+
+                        var sessionResult = ps.Invoke();
+
+                        if (ps.HadErrors)
+                        {
+                            var error = ps.Streams.Error[0];
+                            MessageBox.Show($"Failed to create PowerShell session: {error.Exception.Message}",
+                                "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            this.DialogResult = DialogResult.Cancel;
+                            this.Close();
+                            return;
+                        }
+
+                        if (sessionResult != null && sessionResult.Count > 0)
+                        {
+                            _psSession = sessionResult[0];
+                            FileLogger.Message($"Remote PowerShell session created for '{SessionContext.ServerName}'",
+                                FileLogger.EventType.Information, 2002);
+                        }
+                    }
+                }
+
+                // Update form title with connection info
+                this.Text = $"{Globals.ToolName.HyperView} - Connected to {SessionContext.ServerName} ({SessionContext.ConnectionType})";
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Failed to initialize session: {ex.Message}",
+                    FileLogger.EventType.Error, 2003);
+                MessageBox.Show($"Failed to initialize session: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                this.DialogResult = DialogResult.Cancel;
+                this.Close();
+            }
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            
+            // Clean up remote session if exists
+            if (_psSession != null && _persistentRunspace != null)
+            {
+                try
+                {
+                    using (PowerShell ps = PowerShell.Create())
+                    {
+                        ps.Runspace = _persistentRunspace;
+                        ps.AddCommand("Remove-PSSession")
+                          .AddParameter("Session", _psSession);
+                        ps.Invoke();
+                    }
+                    FileLogger.Message("Remote PowerShell session closed",
+                        FileLogger.EventType.Information, 2004);
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.Message($"Error closing PS session: {ex.Message}",
+                        FileLogger.EventType.Warning, 2005);
+                }
+            }
+
+            // Dispose persistent runspace
+            if (_persistentRunspace != null)
+            {
+                try
+                {
+                    _persistentRunspace.Close();
+                    _persistentRunspace.Dispose();
+                    FileLogger.Message("Persistent runspace closed",
+                        FileLogger.EventType.Information, 2009);
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.Message($"Error closing persistent runspace: {ex.Message}",
+                        FileLogger.EventType.Warning, 2010);
+                }
+            }
         }
 
         private void LoadVMOverview()
@@ -20,166 +140,228 @@ namespace HyperView
                 datagridviewVMOverView.Rows.Clear();
                 datagridviewVMOverView.Columns.Clear();
 
-                using (var powerShell = PowerShell.Create())
+                var results = ExecutePowerShellCommand("Get-VM");
+
+                if (results == null || results.Count == 0)
                 {
-                    powerShell.AddCommand("Get-VM");
-
-                    var results = powerShell.Invoke();
-
-                    if (powerShell.HadErrors)
-                    {
-                        var errors = string.Join(Environment.NewLine,
-                            powerShell.Streams.Error.Select(e => e.ToString()));
-                        MessageBox.Show($"PowerShell errors occurred:\n{errors}", "Error",
-                            MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
-
-                    if (results.Count == 0)
-                    {
-                        MessageBox.Show("No VMs found.", "Information",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        return;
-                    }
-
-                    // Create DataTable with enhanced columns
-                    var dataTable = new DataTable();
-                    dataTable.Columns.Add("VM Name");
-                    dataTable.Columns.Add("State");
-                    dataTable.Columns.Add("CPU Count");
-                    dataTable.Columns.Add("CPU Usage %");
-                    dataTable.Columns.Add("Memory Assigned (MB)");
-                    dataTable.Columns.Add("Memory Demand (MB)");
-                    dataTable.Columns.Add("Memory Startup (MB)");
-                    dataTable.Columns.Add("Dynamic Memory");
-                    dataTable.Columns.Add("Total Disk (GB)");
-                    dataTable.Columns.Add("Network Adapters");
-                    dataTable.Columns.Add("Generation");
-                    dataTable.Columns.Add("Uptime");
-                    dataTable.Columns.Add("Heartbeat");
-                    dataTable.Columns.Add("Integration Services");
-                    dataTable.Columns.Add("Auto Start");
-                    dataTable.Columns.Add("Auto Stop");
-                    dataTable.Columns.Add("VM Groups");
-                    dataTable.Columns.Add("Checkpoint Type");
-                    dataTable.Columns.Add("Checkpoints");
-                    dataTable.Columns.Add("Replication");
-                    dataTable.Columns.Add("Created");
-                    dataTable.Columns.Add("Is Clustered");
-                    dataTable.Columns.Add("Categories");
-
-                    foreach (var vm in results)
-                    {
-                        var row = dataTable.NewRow();
-                        row["VM Name"] = vm.Properties["Name"]?.Value?.ToString() ?? "";
-                        row["State"] = vm.Properties["State"]?.Value?.ToString() ?? "";
-                        row["CPU Count"] = vm.Properties["ProcessorCount"]?.Value?.ToString() ?? "";
-                        row["CPU Usage %"] = vm.Properties["CPUUsage"]?.Value?.ToString() ?? "";
-                        
-                        // Memory values - convert from bytes to MB
-                        var memAssigned = vm.Properties["MemoryAssigned"]?.Value;
-                        row["Memory Assigned (MB)"] = memAssigned != null ? ((long)memAssigned / 1048576).ToString() : "";
-                        
-                        var memDemand = vm.Properties["MemoryDemand"]?.Value;
-                        row["Memory Demand (MB)"] = memDemand != null ? ((long)memDemand / 1048576).ToString() : "";
-                        
-                        var memStartup = vm.Properties["MemoryStartup"]?.Value;
-                        row["Memory Startup (MB)"] = memStartup != null ? ((long)memStartup / 1048576).ToString() : "";
-                        
-                        var dynamicMem = vm.Properties["DynamicMemoryEnabled"]?.Value;
-                        row["Dynamic Memory"] = dynamicMem != null && (bool)dynamicMem ? "Yes" : "No";
-                        
-                        // Get hard drive info
-                        var vmName = vm.Properties["Name"]?.Value?.ToString();
-                        if (!string.IsNullOrEmpty(vmName))
-                        {
-                            var totalDiskGB = GetVMTotalDiskSize(powerShell, vmName);
-                            row["Total Disk (GB)"] = totalDiskGB > 0 ? totalDiskGB.ToString("F2") : "";
-                            
-                            var networkAdapterCount = GetVMNetworkAdapterCount(powerShell, vmName);
-                            row["Network Adapters"] = networkAdapterCount.ToString();
-                        }
-                        else
-                        {
-                            row["Total Disk (GB)"] = "";
-                            row["Network Adapters"] = "";
-                        }
-                        
-                        row["Generation"] = vm.Properties["Generation"]?.Value?.ToString() ?? "";
-                        
-                        // Format uptime
-                        var uptime = vm.Properties["Uptime"]?.Value;
-                        row["Uptime"] = uptime != null ? FormatTimeSpan((TimeSpan)uptime) : "";
-                        
-                        row["Heartbeat"] = vm.Properties["Heartbeat"]?.Value?.ToString() ?? "";
-                        
-                        // Integration services version
-                        var integrationServicesVersion = vm.Properties["IntegrationServicesVersion"]?.Value;
-                        row["Integration Services"] = integrationServicesVersion?.ToString() ?? "";
-                        
-                        row["Auto Start"] = vm.Properties["AutomaticStartAction"]?.Value?.ToString() ?? "";
-                        row["Auto Stop"] = vm.Properties["AutomaticStopAction"]?.Value?.ToString() ?? "";
-                        
-                        // Get VM groups
-                        if (!string.IsNullOrEmpty(vmName))
-                        {
-                            var groups = GetVMGroups(powerShell, vmName);
-                            row["VM Groups"] = groups;
-                        }
-                        else
-                        {
-                            row["VM Groups"] = "";
-                        }
-                        
-                        row["Checkpoint Type"] = vm.Properties["CheckpointType"]?.Value?.ToString() ?? "";
-                        
-                        // Get checkpoint count
-                        if (!string.IsNullOrEmpty(vmName))
-                        {
-                            var checkpointCount = GetVMCheckpointCount(powerShell, vmName);
-                            row["Checkpoints"] = checkpointCount.ToString();
-                        }
-                        else
-                        {
-                            row["Checkpoints"] = "";
-                        }
-                        
-                        var replicationState = vm.Properties["ReplicationState"]?.Value?.ToString();
-                        row["Replication"] = !string.IsNullOrEmpty(replicationState) ? replicationState : "Not Configured";
-                        
-                        var creationTime = vm.Properties["CreationTime"]?.Value;
-                        row["Created"] = creationTime != null ? ((DateTime)creationTime).ToString("yyyy-MM-dd HH:mm") : "";
-                        
-                        var isClustered = vm.Properties["IsClustered"]?.Value;
-                        row["Is Clustered"] = isClustered != null && (bool)isClustered ? "Yes" : "No";
-                        
-                        row["Categories"] = "";
-                        
-                        dataTable.Rows.Add(row);
-                    }
-
-                    // Bind to DataGridView
-                    datagridviewVMOverView.DataSource = dataTable;
-                    
-                    // Configure DataGridView properties
-                    datagridviewVMOverView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
-                    datagridviewVMOverView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-                    datagridviewVMOverView.MultiSelect = false;
-                    datagridviewVMOverView.ReadOnly = true;
-                    datagridviewVMOverView.AllowUserToAddRows = false;
-                    datagridviewVMOverView.AllowUserToDeleteRows = false;
-                    datagridviewVMOverView.RowHeadersVisible = false;
-                    
-                    // Apply color coding
-                    ApplyColorCoding();
+                    MessageBox.Show("No VMs found.", "Information",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
                 }
+
+                // Create DataTable with enhanced columns
+                var dataTable = new DataTable();
+                dataTable.Columns.Add("VM Name");
+                dataTable.Columns.Add("State");
+                dataTable.Columns.Add("CPU Count");
+                dataTable.Columns.Add("CPU Usage %");
+                dataTable.Columns.Add("Memory Assigned (MB)");
+                dataTable.Columns.Add("Memory Demand (MB)");
+                dataTable.Columns.Add("Memory Startup (MB)");
+                dataTable.Columns.Add("Dynamic Memory");
+                dataTable.Columns.Add("Total Disk (GB)");
+                dataTable.Columns.Add("Network Adapters");
+                dataTable.Columns.Add("Generation");
+                dataTable.Columns.Add("Uptime");
+                dataTable.Columns.Add("Heartbeat");
+                dataTable.Columns.Add("Integration Services");
+                dataTable.Columns.Add("Auto Start");
+                dataTable.Columns.Add("Auto Stop");
+                dataTable.Columns.Add("VM Groups");
+                dataTable.Columns.Add("Checkpoint Type");
+                dataTable.Columns.Add("Checkpoints");
+                dataTable.Columns.Add("Replication");
+                dataTable.Columns.Add("Created");
+                dataTable.Columns.Add("Is Clustered");
+                dataTable.Columns.Add("Categories");
+
+                foreach (var vm in results)
+                {
+                    var row = dataTable.NewRow();
+                    row["VM Name"] = vm.Properties["Name"]?.Value?.ToString() ?? "";
+                    row["State"] = vm.Properties["State"]?.Value?.ToString() ?? "";
+                    row["CPU Count"] = vm.Properties["ProcessorCount"]?.Value?.ToString() ?? "";
+                    row["CPU Usage %"] = vm.Properties["CPUUsage"]?.Value?.ToString() ?? "";
+                    
+                    // Memory values - convert from bytes to MB
+                    var memAssigned = vm.Properties["MemoryAssigned"]?.Value;
+                    row["Memory Assigned (MB)"] = memAssigned != null ? ((long)memAssigned / 1048576).ToString() : "";
+                    
+                    var memDemand = vm.Properties["MemoryDemand"]?.Value;
+                    row["Memory Demand (MB)"] = memDemand != null ? ((long)memDemand / 1048576).ToString() : "";
+                    
+                    var memStartup = vm.Properties["MemoryStartup"]?.Value;
+                    row["Memory Startup (MB)"] = memStartup != null ? ((long)memStartup / 1048576).ToString() : "";
+                    
+                    var dynamicMem = vm.Properties["DynamicMemoryEnabled"]?.Value;
+                    row["Dynamic Memory"] = dynamicMem != null && (bool)dynamicMem ? "Yes" : "No";
+                    
+                    // Get hard drive info
+                    var vmName = vm.Properties["Name"]?.Value?.ToString();
+                    if (!string.IsNullOrEmpty(vmName))
+                    {
+                        var totalDiskGB = GetVMTotalDiskSize(vmName);
+                        row["Total Disk (GB)"] = totalDiskGB > 0 ? totalDiskGB.ToString("F2") : "";
+                        
+                        var networkAdapterCount = GetVMNetworkAdapterCount(vmName);
+                        row["Network Adapters"] = networkAdapterCount.ToString();
+                    }
+                    else
+                    {
+                        row["Total Disk (GB)"] = "";
+                        row["Network Adapters"] = "";
+                    }
+                    
+                    row["Generation"] = vm.Properties["Generation"]?.Value?.ToString() ?? "";
+                    
+                    // Format uptime
+                    var uptime = vm.Properties["Uptime"]?.Value;
+                    row["Uptime"] = uptime != null ? FormatTimeSpan((TimeSpan)uptime) : "";
+                    
+                    row["Heartbeat"] = vm.Properties["Heartbeat"]?.Value?.ToString() ?? "";
+                    
+                    // Integration services version
+                    var integrationServicesVersion = vm.Properties["IntegrationServicesVersion"]?.Value;
+                    row["Integration Services"] = integrationServicesVersion?.ToString() ?? "";
+                    
+                    row["Auto Start"] = vm.Properties["AutomaticStartAction"]?.Value?.ToString() ?? "";
+                    row["Auto Stop"] = vm.Properties["AutomaticStopAction"]?.Value?.ToString() ?? "";
+                    
+                    // Get VM groups
+                    if (!string.IsNullOrEmpty(vmName))
+                    {
+                        var groups = GetVMGroups(vmName);
+                        row["VM Groups"] = groups;
+                    }
+                    else
+                    {
+                        row["VM Groups"] = "";
+                    }
+                    
+                    row["Checkpoint Type"] = vm.Properties["CheckpointType"]?.Value?.ToString() ?? "";
+                    
+                    // Get checkpoint count
+                    if (!string.IsNullOrEmpty(vmName))
+                    {
+                        var checkpointCount = GetVMCheckpointCount(vmName);
+                        row["Checkpoints"] = checkpointCount.ToString();
+                    }
+                    else
+                    {
+                        row["Checkpoints"] = "";
+                    }
+                    
+                    var replicationState = vm.Properties["ReplicationState"]?.Value?.ToString();
+                    row["Replication"] = !string.IsNullOrEmpty(replicationState) ? replicationState : "Not Configured";
+                    
+                    var creationTime = vm.Properties["CreationTime"]?.Value;
+                    row["Created"] = creationTime != null ? ((DateTime)creationTime).ToString("yyyy-MM-dd HH:mm") : "";
+                    
+                    var isClustered = vm.Properties["IsClustered"]?.Value;
+                    row["Is Clustered"] = isClustered != null && (bool)isClustered ? "Yes" : "No";
+                    
+                    row["Categories"] = "";
+                    
+                    dataTable.Rows.Add(row);
+                }
+
+                // Bind to DataGridView
+                datagridviewVMOverView.DataSource = dataTable;
+                
+                // Configure DataGridView properties
+                datagridviewVMOverView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+                datagridviewVMOverView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                datagridviewVMOverView.MultiSelect = false;
+                datagridviewVMOverView.ReadOnly = true;
+                datagridviewVMOverView.AllowUserToAddRows = false;
+                datagridviewVMOverView.AllowUserToDeleteRows = false;
+                datagridviewVMOverView.RowHeadersVisible = false;
+                
+                // Apply color coding
+                ApplyColorCoding();
             }
             catch (Exception ex)
             {
+                FileLogger.Message($"Error loading VM overview: {ex.Message}",
+                    FileLogger.EventType.Error, 2006);
                 MessageBox.Show($"Error loading VM overview: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        private System.Collections.ObjectModel.Collection<PSObject> ExecutePowerShellCommand(string command, Dictionary<string, object> parameters = null)
+        {
+            try
+            {
+                if (SessionContext.IsLocal)
+                {
+                    // Local execution - create new runspace for each command
+                    using (Runspace runspace = RunspaceFactory.CreateRunspace())
+                    {
+                        runspace.Open();
+
+                        using (PowerShell ps = PowerShell.Create())
+                        {
+                            ps.Runspace = runspace;
+                            ps.AddScript(command);
+
+                            var results = ps.Invoke();
+
+                            if (ps.HadErrors)
+                            {
+                                var errors = string.Join(Environment.NewLine,
+                                    ps.Streams.Error.Select(e => e.ToString()));
+                                FileLogger.Message($"PowerShell command '{command}' errors: {errors}",
+                                    FileLogger.EventType.Error, 2007);
+                                return null;
+                            }
+
+                            return results;
+                        }
+                    }
+                }
+                else
+                {
+                    // Remote execution - use persistent runspace with the session
+                    if (_persistentRunspace == null || _persistentRunspace.RunspaceStateInfo.State != RunspaceState.Opened)
+                    {
+                        FileLogger.Message("Persistent runspace is not available or not opened",
+                            FileLogger.EventType.Error, 2011);
+                        return null;
+                    }
+
+                    using (PowerShell ps = PowerShell.Create())
+                    {
+                        ps.Runspace = _persistentRunspace;
+
+                        // Remote execution via Invoke-Command
+                        ps.AddCommand("Invoke-Command")
+                          .AddParameter("Session", _psSession)
+                          .AddParameter("ScriptBlock", ScriptBlock.Create(command));
+
+                        var results = ps.Invoke();
+
+                        if (ps.HadErrors)
+                        {
+                            var errors = string.Join(Environment.NewLine,
+                                ps.Streams.Error.Select(e => e.ToString()));
+                            FileLogger.Message($"PowerShell command '{command}' errors: {errors}",
+                                FileLogger.EventType.Error, 2007);
+                            return null;
+                        }
+
+                        return results;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Error executing PowerShell command '{command}': {ex.Message}",
+                    FileLogger.EventType.Error, 2008);
+                return null;
+            }
+        }
+
 
         private string FormatTimeSpan(TimeSpan timeSpan)
         {
@@ -191,25 +373,36 @@ namespace HyperView
                 return $"{timeSpan.Minutes}m {timeSpan.Seconds}s";
         }
 
-        private double GetVMTotalDiskSize(PowerShell powerShell, string vmName)
+        private double GetVMTotalDiskSize(string vmName)
         {
             try
             {
-                powerShell.Commands.Clear();
-                powerShell.AddCommand("Get-VMHardDiskDrive")
-                    .AddParameter("VMName", vmName);
+                var results = ExecutePowerShellCommand($"Get-VMHardDiskDrive -VMName '{vmName}'");
                 
-                var hdds = powerShell.Invoke();
-                powerShell.Streams.Error.Clear();
+                if (results == null || results.Count == 0)
+                    return 0;
                 
                 double totalGB = 0;
-                foreach (var hdd in hdds)
+                foreach (var hdd in results)
                 {
                     var path = hdd.Properties["Path"]?.Value?.ToString();
-                    if (!string.IsNullOrEmpty(path) && System.IO.File.Exists(path))
+                    if (!string.IsNullOrEmpty(path))
                     {
-                        var fileInfo = new System.IO.FileInfo(path);
-                        totalGB += fileInfo.Length / (1024.0 * 1024.0 * 1024.0);
+                        // For remote, we need to get file size through PS
+                        if (!SessionContext.IsLocal)
+                        {
+                            var sizeResult = ExecutePowerShellCommand($"(Get-Item '{path}').Length");
+                            if (sizeResult != null && sizeResult.Count > 0)
+                            {
+                                var size = Convert.ToInt64(sizeResult[0].BaseObject);
+                                totalGB += size / (1024.0 * 1024.0 * 1024.0);
+                            }
+                        }
+                        else if (System.IO.File.Exists(path))
+                        {
+                            var fileInfo = new System.IO.FileInfo(path);
+                            totalGB += fileInfo.Length / (1024.0 * 1024.0 * 1024.0);
+                        }
                     }
                 }
                 
@@ -221,18 +414,12 @@ namespace HyperView
             }
         }
 
-        private int GetVMNetworkAdapterCount(PowerShell powerShell, string vmName)
+        private int GetVMNetworkAdapterCount(string vmName)
         {
             try
             {
-                powerShell.Commands.Clear();
-                powerShell.AddCommand("Get-VMNetworkAdapter")
-                    .AddParameter("VMName", vmName);
-                
-                var adapters = powerShell.Invoke();
-                powerShell.Streams.Error.Clear();
-                
-                return adapters.Count;
+                var results = ExecutePowerShellCommand($"Get-VMNetworkAdapter -VMName '{vmName}'");
+                return results?.Count ?? 0;
             }
             catch
             {
@@ -240,19 +427,15 @@ namespace HyperView
             }
         }
 
-        private string GetVMGroups(PowerShell powerShell, string vmName)
+        private string GetVMGroups(string vmName)
         {
             try
             {
-                powerShell.Commands.Clear();
-                powerShell.AddScript($"Get-VMGroup | Where-Object {{ $_.VMMembers.Name -contains '{vmName}' }} | Select-Object -ExpandProperty Name");
+                var results = ExecutePowerShellCommand($"Get-VMGroup | Where-Object {{ $_.VMMembers.Name -contains '{vmName}' }} | Select-Object -ExpandProperty Name");
                 
-                var groups = powerShell.Invoke();
-                powerShell.Streams.Error.Clear();
-                
-                if (groups.Count > 0)
+                if (results != null && results.Count > 0)
                 {
-                    return string.Join(", ", groups.Select(g => g.ToString()));
+                    return string.Join(", ", results.Select(g => g.ToString()));
                 }
                 
                 return "";
@@ -263,18 +446,12 @@ namespace HyperView
             }
         }
 
-        private int GetVMCheckpointCount(PowerShell powerShell, string vmName)
+        private int GetVMCheckpointCount(string vmName)
         {
             try
             {
-                powerShell.Commands.Clear();
-                powerShell.AddCommand("Get-VMSnapshot")
-                    .AddParameter("VMName", vmName);
-                
-                var checkpoints = powerShell.Invoke();
-                powerShell.Streams.Error.Clear();
-                
-                return checkpoints.Count;
+                var results = ExecutePowerShellCommand($"Get-VMSnapshot -VMName '{vmName}'");
+                return results?.Count ?? 0;
             }
             catch
             {

@@ -30,14 +30,32 @@ namespace HyperView.Forms
         {
             InitializeComponent();
             InitializeFormEvents();
+            SetDefaultServer();
             LoadSavedCredentials();
             SetToolName();
+        }
+
+        private void SetDefaultServer()
+        {
+            // Set default server to current hostname if textbox is empty
+            if (string.IsNullOrWhiteSpace(textboxServer.Text))
+            {
+                try
+                {
+                    textboxServer.Text = Environment.MachineName;
+                }
+                catch
+                {
+                    // If unable to get machine name, leave empty
+                    textboxServer.Text = string.Empty;
+                }
+            }
         }
 
         private void SetToolName()
         {
             labelLoginFormToolName.Text = Globals.ToolName.HyperViewGui;
-            this.Text = $"{Globals.ToolName.HyperView} - Login";
+            Text = $"{Globals.ToolName.HyperView} - Login";
         }
 
         private void InitializeFormEvents()
@@ -183,26 +201,55 @@ namespace HyperView.Forms
 
                 if (connectionResult.Success)
                 {
+                    string connectedUser = useWindowsAuth 
+                        ? WindowsIdentity.GetCurrent().Name 
+                        : textboxUsername.Text.Trim();
+                    
+                    string connectionType = useWindowsAuth 
+                        ? "Windows Authentication" 
+                        : "Custom Credentials";
+
+                    // Store result for legacy compatibility
                     Result = new LoginResult
                     {
                         Success = true,
                         ServerName = serverName,
                         UseWindowsAuth = useWindowsAuth,
                         Credentials = credentials,
-                        ConnectedUser = useWindowsAuth 
-                            ? WindowsIdentity.GetCurrent().Name 
-                            : textboxUsername.Text.Trim(),
-                        ConnectionType = useWindowsAuth 
-                            ? "Windows Authentication" 
-                            : "Custom Credentials",
+                        ConnectedUser = connectedUser,
+                        ConnectionType = connectionType,
                         VMCount = connectionResult.VMCount
                     };
 
-                    MessageBox.Show($"Successfully connected to '{serverName}'", 
-                        "Connection Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    // Initialize global session context for reuse across the application
+                    SessionContext.Initialize(
+                        serverName, 
+                        useWindowsAuth, 
+                        credentials, 
+                        connectedUser, 
+                        connectionType, 
+                        connectionResult.VMCount,
+                        connectionResult.IsLocal
+                    );
 
-                    this.DialogResult = DialogResult.OK;
-                    this.Close();
+                    FileLogger.Message($"Login successful for '{serverName}' as '{connectedUser}'", 
+                        FileLogger.EventType.Information, 1016);
+
+                    // Hide login form and show main form
+                    this.Hide();
+                    
+                    using (MainForm mainForm = new MainForm())
+                    {
+                        var mainResult = mainForm.ShowDialog();
+                        
+                        // If main form closes, clear session and close application
+                        if (mainResult == DialogResult.OK || mainResult == DialogResult.Cancel)
+                        {
+                            SessionContext.Clear();
+                            this.DialogResult = DialogResult.OK;
+                            this.Close();
+                        }
+                    }
                 }
                 else
                 {
