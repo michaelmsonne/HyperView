@@ -38,8 +38,8 @@
             checkboxRemember = new CheckBox();
             labelPassword = new Label();
             labelUsername = new Label();
-            textBox2 = new TextBox();
-            textBox1 = new TextBox();
+            textboxPassword = new TextBox();
+            textboxUsername = new TextBox();
             radioCustom = new RadioButton();
             radioWindows = new RadioButton();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
@@ -89,8 +89,8 @@
             groupAuth.Controls.Add(checkboxRemember);
             groupAuth.Controls.Add(labelPassword);
             groupAuth.Controls.Add(labelUsername);
-            groupAuth.Controls.Add(textBox2);
-            groupAuth.Controls.Add(textBox1);
+            groupAuth.Controls.Add(textboxPassword);
+            groupAuth.Controls.Add(textboxUsername);
             groupAuth.Controls.Add(radioCustom);
             groupAuth.Controls.Add(radioWindows);
             groupAuth.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
@@ -150,21 +150,21 @@
             labelUsername.TabIndex = 4;
             labelUsername.Text = "Username:";
             // 
-            // textBox2
+            // textboxPassword
             // 
-            textBox2.Font = new Font("Segoe UI", 9F);
-            textBox2.Location = new Point(106, 108);
-            textBox2.Name = "textBox2";
-            textBox2.Size = new Size(284, 23);
-            textBox2.TabIndex = 3;
+            textboxPassword.Font = new Font("Segoe UI", 9F);
+            textboxPassword.Location = new Point(106, 108);
+            textboxPassword.Name = "textboxPassword";
+            textboxPassword.Size = new Size(284, 23);
+            textboxPassword.TabIndex = 3;
             // 
-            // textBox1
+            // textboxUsername
             // 
-            textBox1.Font = new Font("Segoe UI", 9F);
-            textBox1.Location = new Point(106, 79);
-            textBox1.Name = "textBox1";
-            textBox1.Size = new Size(284, 23);
-            textBox1.TabIndex = 2;
+            textboxUsername.Font = new Font("Segoe UI", 9F);
+            textboxUsername.Location = new Point(106, 79);
+            textboxUsername.Name = "textboxUsername";
+            textboxUsername.Size = new Size(284, 23);
+            textboxUsername.TabIndex = 2;
             // 
             // radioCustom
             // 
@@ -201,6 +201,7 @@
             Controls.Add(labelServer);
             Controls.Add(pictureBox1);
             Controls.Add(labelLoginFormToolName);
+            MaximizeBox = false;
             Name = "LoginForm";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "LoginForm";
@@ -222,8 +223,8 @@
         private RadioButton radioWindows;
         private Label labelPassword;
         private Label labelUsername;
-        private TextBox textBox2;
-        private TextBox textBox1;
+        private TextBox textboxPassword;
+        private TextBox textboxUsername;
         private Button buttonCancel;
         private Button buttonLogin;
         private CheckBox checkboxRemember;

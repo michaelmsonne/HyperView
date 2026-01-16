@@ -83,7 +83,7 @@ Outline the file contents of the repository. It helps users navigate the codebas
 
 ## ⚡ Getting Started
 ### 🛠 Prerequisites
-- [.NET Core SDK](https://dotnet.microsoft.com/download) installed on your system.
+- [.NET 10.0 Desktop Runtime](https://dotnet.microsoft.com/download) installed on your system.
 
 ### Access
 
