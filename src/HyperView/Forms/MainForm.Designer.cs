@@ -116,7 +116,7 @@
             tabpageVMGroups.Location = new Point(4, 24);
             tabpageVMGroups.Name = "tabpageVMGroups";
             tabpageVMGroups.Padding = new Padding(3);
-            tabpageVMGroups.Size = new Size(1613, 769);
+            tabpageVMGroups.Size = new Size(1613, 844);
             tabpageVMGroups.TabIndex = 1;
             tabpageVMGroups.Text = "Manage VM Groups";
             tabpageVMGroups.UseVisualStyleBackColor = true;
@@ -125,7 +125,7 @@
             // 
             tabpageManageNetwork.Location = new Point(4, 24);
             tabpageManageNetwork.Name = "tabpageManageNetwork";
-            tabpageManageNetwork.Size = new Size(1613, 769);
+            tabpageManageNetwork.Size = new Size(1613, 844);
             tabpageManageNetwork.TabIndex = 2;
             tabpageManageNetwork.Text = "Manage VM Networks";
             tabpageManageNetwork.UseVisualStyleBackColor = true;
@@ -134,7 +134,7 @@
             // 
             tabpagehvHosts.Location = new Point(4, 24);
             tabpagehvHosts.Name = "tabpagehvHosts";
-            tabpagehvHosts.Size = new Size(1613, 769);
+            tabpagehvHosts.Size = new Size(1613, 844);
             tabpagehvHosts.TabIndex = 3;
             tabpagehvHosts.Text = "hvHosts";
             tabpagehvHosts.UseVisualStyleBackColor = true;
@@ -143,7 +143,7 @@
             // 
             tabpagehvClusters.Location = new Point(4, 24);
             tabpagehvClusters.Name = "tabpagehvClusters";
-            tabpagehvClusters.Size = new Size(1613, 769);
+            tabpagehvClusters.Size = new Size(1613, 844);
             tabpagehvClusters.TabIndex = 4;
             tabpagehvClusters.Text = "hvClusters";
             tabpagehvClusters.UseVisualStyleBackColor = true;
@@ -152,7 +152,7 @@
             // 
             tabpagehvStorage.Location = new Point(4, 24);
             tabpagehvStorage.Name = "tabpagehvStorage";
-            tabpagehvStorage.Size = new Size(1613, 769);
+            tabpagehvStorage.Size = new Size(1613, 844);
             tabpagehvStorage.TabIndex = 5;
             tabpagehvStorage.Text = "hvStorage";
             tabpagehvStorage.UseVisualStyleBackColor = true;
@@ -161,7 +161,7 @@
             // 
             tabpagehvNetworking.Location = new Point(4, 24);
             tabpagehvNetworking.Name = "tabpagehvNetworking";
-            tabpagehvNetworking.Size = new Size(1613, 769);
+            tabpagehvNetworking.Size = new Size(1613, 844);
             tabpagehvNetworking.TabIndex = 6;
             tabpagehvNetworking.Text = "hvNetworking";
             tabpagehvNetworking.UseVisualStyleBackColor = true;
@@ -170,7 +170,7 @@
             // 
             tabpagehvCheckpoints.Location = new Point(4, 24);
             tabpagehvCheckpoints.Name = "tabpagehvCheckpoints";
-            tabpagehvCheckpoints.Size = new Size(1613, 769);
+            tabpagehvCheckpoints.Size = new Size(1613, 844);
             tabpagehvCheckpoints.TabIndex = 7;
             tabpagehvCheckpoints.Text = "hvCheckpoints";
             tabpagehvCheckpoints.UseVisualStyleBackColor = true;
@@ -179,7 +179,7 @@
             // 
             tabpagehvReplica.Location = new Point(4, 24);
             tabpagehvReplica.Name = "tabpagehvReplica";
-            tabpagehvReplica.Size = new Size(1613, 769);
+            tabpagehvReplica.Size = new Size(1613, 844);
             tabpagehvReplica.TabIndex = 8;
             tabpagehvReplica.Text = "hvReplica";
             tabpagehvReplica.UseVisualStyleBackColor = true;
@@ -188,7 +188,7 @@
             // 
             tabpagehvResources.Location = new Point(4, 24);
             tabpagehvResources.Name = "tabpagehvResources";
-            tabpagehvResources.Size = new Size(1613, 769);
+            tabpagehvResources.Size = new Size(1613, 844);
             tabpagehvResources.TabIndex = 9;
             tabpagehvResources.Text = "hvResources";
             tabpagehvResources.UseVisualStyleBackColor = true;
@@ -197,7 +197,7 @@
             // 
             tabpagehvSecurity.Location = new Point(4, 24);
             tabpagehvSecurity.Name = "tabpagehvSecurity";
-            tabpagehvSecurity.Size = new Size(1613, 769);
+            tabpagehvSecurity.Size = new Size(1613, 844);
             tabpagehvSecurity.TabIndex = 10;
             tabpagehvSecurity.Text = "hvSecurity";
             tabpagehvSecurity.UseVisualStyleBackColor = true;
@@ -206,7 +206,7 @@
             // 
             tabpagehvPerformance.Location = new Point(4, 24);
             tabpagehvPerformance.Name = "tabpagehvPerformance";
-            tabpagehvPerformance.Size = new Size(1613, 769);
+            tabpagehvPerformance.Size = new Size(1613, 844);
             tabpagehvPerformance.TabIndex = 11;
             tabpagehvPerformance.Text = "hvPerformance";
             tabpagehvPerformance.UseVisualStyleBackColor = true;
@@ -215,7 +215,7 @@
             // 
             tabpagehvCompliance.Location = new Point(4, 24);
             tabpagehvCompliance.Name = "tabpagehvCompliance";
-            tabpagehvCompliance.Size = new Size(1613, 769);
+            tabpagehvCompliance.Size = new Size(1613, 844);
             tabpagehvCompliance.TabIndex = 12;
             tabpagehvCompliance.Text = "hvCompliance";
             tabpagehvCompliance.UseVisualStyleBackColor = true;
@@ -224,7 +224,7 @@
             // 
             tabpagehvInventory.Location = new Point(4, 24);
             tabpagehvInventory.Name = "tabpagehvInventory";
-            tabpagehvInventory.Size = new Size(1613, 769);
+            tabpagehvInventory.Size = new Size(1613, 844);
             tabpagehvInventory.TabIndex = 13;
             tabpagehvInventory.Text = "hvInventory";
             tabpagehvInventory.UseVisualStyleBackColor = true;
@@ -233,7 +233,7 @@
             // 
             tabpageCreateVM.Location = new Point(4, 24);
             tabpageCreateVM.Name = "tabpageCreateVM";
-            tabpageCreateVM.Size = new Size(1613, 769);
+            tabpageCreateVM.Size = new Size(1613, 844);
             tabpageCreateVM.TabIndex = 14;
             tabpageCreateVM.Text = "Create VM´s";
             tabpageCreateVM.UseVisualStyleBackColor = true;
@@ -242,7 +242,7 @@
             // 
             tabpageHealthOverview.Location = new Point(4, 24);
             tabpageHealthOverview.Name = "tabpageHealthOverview";
-            tabpageHealthOverview.Size = new Size(1613, 769);
+            tabpageHealthOverview.Size = new Size(1613, 844);
             tabpageHealthOverview.TabIndex = 15;
             tabpageHealthOverview.Text = "Health Overview";
             tabpageHealthOverview.UseVisualStyleBackColor = true;
