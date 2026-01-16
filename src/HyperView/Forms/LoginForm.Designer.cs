@@ -44,8 +44,12 @@
             radioCustom = new RadioButton();
             radioWindows = new RadioButton();
             buttonHelpConnectGuide = new Button();
+            statusStripLoginForm = new StatusStrip();
+            toolStripStatusLabelLoginForm = new ToolStripStatusLabel();
+            toolStripStatusLabelTextLoginForm = new ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             groupAuth.SuspendLayout();
+            statusStripLoginForm.SuspendLayout();
             SuspendLayout();
             // 
             // labelLoginFormToolName
@@ -210,11 +214,33 @@
             buttonHelpConnectGuide.UseVisualStyleBackColor = true;
             buttonHelpConnectGuide.Click += buttonHelpConnectGuide_Click;
             // 
+            // statusStripLoginForm
+            // 
+            statusStripLoginForm.Items.AddRange(new ToolStripItem[] { toolStripStatusLabelLoginForm, toolStripStatusLabelTextLoginForm });
+            statusStripLoginForm.Location = new Point(0, 428);
+            statusStripLoginForm.Name = "statusStripLoginForm";
+            statusStripLoginForm.Size = new Size(432, 22);
+            statusStripLoginForm.TabIndex = 6;
+            statusStripLoginForm.Text = "statusStrip1";
+            // 
+            // toolStripStatusLabelLoginForm
+            // 
+            toolStripStatusLabelLoginForm.Name = "toolStripStatusLabelLoginForm";
+            toolStripStatusLabelLoginForm.Size = new Size(42, 17);
+            toolStripStatusLabelLoginForm.Text = "Status:";
+            // 
+            // toolStripStatusLabelTextLoginForm
+            // 
+            toolStripStatusLabelTextLoginForm.Name = "toolStripStatusLabelTextLoginForm";
+            toolStripStatusLabelTextLoginForm.Size = new Size(67, 17);
+            toolStripStatusLabelTextLoginForm.Text = "%STATUS%";
+            // 
             // LoginForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(432, 430);
+            ClientSize = new Size(432, 450);
+            Controls.Add(statusStripLoginForm);
             Controls.Add(buttonHelpConnectGuide);
             Controls.Add(groupAuth);
             Controls.Add(textboxServer);
@@ -230,6 +256,8 @@
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             groupAuth.ResumeLayout(false);
             groupAuth.PerformLayout();
+            statusStripLoginForm.ResumeLayout(false);
+            statusStripLoginForm.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -251,5 +279,8 @@
         private Button ButtonLogin;
         private CheckBox checkboxRemember;
         private Button buttonHelpConnectGuide;
+        private StatusStrip statusStripLoginForm;
+        private ToolStripStatusLabel toolStripStatusLabelLoginForm;
+        private ToolStripStatusLabel toolStripStatusLabelTextLoginForm;
     }
 }
