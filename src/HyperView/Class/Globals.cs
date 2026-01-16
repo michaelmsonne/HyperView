@@ -28,6 +28,10 @@
             internal static string URLMicrosoftLearnTrustedSigning = @"https://learn.microsoft.com/en-us/azure/trusted-signing/overview";
         }
 
+        internal class ToolProperties
+        {
+            internal static string ToolVersion = Application.ProductVersion.Split('+')[0];
+        }
 
         internal static async Task<string> FetchCurrentCertificateThumbprintAsync()
         {

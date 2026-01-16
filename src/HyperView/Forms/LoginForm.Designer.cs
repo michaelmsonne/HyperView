@@ -43,6 +43,7 @@
             textboxUsername = new TextBox();
             radioCustom = new RadioButton();
             radioWindows = new RadioButton();
+            buttonHelpConnectGuide = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             groupAuth.SuspendLayout();
             SuspendLayout();
@@ -51,7 +52,7 @@
             // 
             labelLoginFormToolName.AutoSize = true;
             labelLoginFormToolName.Font = new Font("Segoe UI", 15.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            labelLoginFormToolName.Location = new Point(133, 78);
+            labelLoginFormToolName.Location = new Point(147, 68);
             labelLoginFormToolName.Name = "labelLoginFormToolName";
             labelLoginFormToolName.Size = new Size(135, 30);
             labelLoginFormToolName.TabIndex = 0;
@@ -60,9 +61,9 @@
             // pictureBox1
             // 
             pictureBox1.Image = Properties.Resources.hyper_v;
-            pictureBox1.Location = new Point(30, 46);
+            pictureBox1.Location = new Point(36, 30);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(87, 90);
+            pictureBox1.Size = new Size(105, 106);
             pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
             pictureBox1.TabIndex = 1;
             pictureBox1.TabStop = false;
@@ -80,7 +81,7 @@
             // 
             textboxServer.Location = new Point(110, 167);
             textboxServer.Name = "textboxServer";
-            textboxServer.Size = new Size(292, 23);
+            textboxServer.Size = new Size(271, 23);
             textboxServer.TabIndex = 3;
             textboxServer.TextChanged += textboxServer_TextChanged;
             textboxServer.KeyDown += TextboxServer_KeyDown;
@@ -200,11 +201,21 @@
             radioWindows.UseVisualStyleBackColor = true;
             radioWindows.CheckedChanged += RadioAuth_CheckedChanged;
             // 
+            // buttonHelpConnectGuide
+            // 
+            buttonHelpConnectGuide.Location = new Point(387, 167);
+            buttonHelpConnectGuide.Name = "buttonHelpConnectGuide";
+            buttonHelpConnectGuide.Size = new Size(36, 23);
+            buttonHelpConnectGuide.TabIndex = 5;
+            buttonHelpConnectGuide.UseVisualStyleBackColor = true;
+            buttonHelpConnectGuide.Click += buttonHelpConnectGuide_Click;
+            // 
             // LoginForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(432, 430);
+            Controls.Add(buttonHelpConnectGuide);
             Controls.Add(groupAuth);
             Controls.Add(textboxServer);
             Controls.Add(labelServer);
@@ -239,5 +250,6 @@
         private Button buttonCancel;
         private Button ButtonLogin;
         private CheckBox checkboxRemember;
+        private Button buttonHelpConnectGuide;
     }
 }

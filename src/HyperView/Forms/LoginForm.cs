@@ -59,7 +59,7 @@ namespace HyperView.Forms
 
         private void SetToolName()
         {
-            labelLoginFormToolName.Text = Globals.ToolName.HyperViewGui;
+            labelLoginFormToolName.Text = Globals.ToolName.HyperView + " v." + Globals.ToolProperties.ToolVersion;
             Text = $"{Globals.ToolName.HyperView} - Login";
         }
 
@@ -69,7 +69,7 @@ namespace HyperView.Forms
             buttonCancel.Click += ButtonCancel_Click;
             radioWindows.CheckedChanged += RadioAuth_CheckedChanged;
             radioCustom.CheckedChanged += RadioAuth_CheckedChanged;
-            
+
             // Note: The following are already wired in Designer.cs:
             // - ButtonLogin.Click
             // - textboxServer.KeyDown
@@ -1094,6 +1094,20 @@ namespace HyperView.Forms
                 // Reset check when server name is too short
                 _lastServerChecked = string.Empty;
             }
+        }
+
+        private void buttonHelpConnectGuide_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show(
+                "🔍 To directly manage a single host, enter the IP address or host name. To manage multiple hosts, enter the IP address or name of a Cluster.\n\n" +
+                "To connect to a Hyper-V server or Cluster, ensure the following prerequisites are met:\n\n" +
+                "1. The Hyper-V/Cluster role(s) is installed on the target server.\n" +
+                "2. PowerShell Remoting (WinRM) is enabled and accessible on the target server.\n" +
+                "3. You have the necessary permissions to manage Hyper-V/Cluster on the target server.\n" +
+                "4. If using custom credentials, ensure they are valid and have Hyper-V management rights.\n\n" +
+                "For local connections, ensure you run this application with Administrator privileges or " +
+                "that your user account is a member of the 'Hyper-V Administrators' group.",
+                "Connection Guide", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }
