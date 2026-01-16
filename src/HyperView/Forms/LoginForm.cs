@@ -35,7 +35,7 @@ namespace HyperView.Forms
             SetDefaultServer();
             LoadSavedCredentials();
             SetToolName();
-            
+
             // Mark initialization as complete
             _isInitializing = false;
         }
@@ -65,14 +65,16 @@ namespace HyperView.Forms
 
         private void InitializeFormEvents()
         {
-            // Wire up event handlers
-            ButtonLogin.Click += ButtonLogin_Click;
+            // Wire up event handlers that are NOT in the Designer
             buttonCancel.Click += ButtonCancel_Click;
             radioWindows.CheckedChanged += RadioAuth_CheckedChanged;
             radioCustom.CheckedChanged += RadioAuth_CheckedChanged;
-            textboxUsername.KeyDown += TextboxUsername_KeyDown;
-            textboxPassword.KeyDown += TextboxPassword_KeyDown;
-            textboxServer.KeyDown += TextboxServer_KeyDown;
+            
+            // Note: The following are already wired in Designer.cs:
+            // - ButtonLogin.Click
+            // - textboxServer.KeyDown
+            // - textboxUsername.KeyDown
+            // - textboxPassword.KeyDown
 
             // Set password char
             textboxPassword.UseSystemPasswordChar = true;
@@ -101,6 +103,11 @@ namespace HyperView.Forms
             if (e.KeyCode == Keys.Enter)
             {
                 e.SuppressKeyPress = true;
+
+                // Don't trigger login if already in progress
+                if (_isConnecting)
+                    return;
+
                 if (radioWindows.Checked)
                 {
                     ButtonLogin.PerformClick();
@@ -117,6 +124,11 @@ namespace HyperView.Forms
             if (e.KeyCode == Keys.Enter)
             {
                 e.SuppressKeyPress = true;
+
+                // Don't trigger login if already in progress
+                if (_isConnecting)
+                    return;
+
                 if (string.IsNullOrWhiteSpace(textboxPassword.Text))
                 {
                     textboxPassword.Focus();
@@ -133,6 +145,11 @@ namespace HyperView.Forms
             if (e.KeyCode == Keys.Enter)
             {
                 e.SuppressKeyPress = true;
+
+                // Don't trigger login if already in progress
+                if (_isConnecting)
+                    return;
+
                 ButtonLogin.PerformClick();
             }
         }
@@ -140,14 +157,18 @@ namespace HyperView.Forms
         private async void ButtonLogin_Click(object sender, EventArgs e)
         {
             // Prevent double-click or multiple simultaneous login attempts
-            if (_isConnecting)
+            if (_isConnecting || !ButtonLogin.Enabled)
             {
-                FileLogger.Message($"Login attempt already in progress, ignoring duplicate request",
+                FileLogger.Message($"Login attempt blocked - already in progress or button disabled",
                     FileLogger.EventType.Warning, 1042);
                 return;
             }
 
             _isConnecting = true;
+
+            // Immediately disable the button to prevent any possibility of re-entry
+            ButtonLogin.Enabled = false;
+            buttonCancel.Enabled = false;
 
             string serverName = textboxServer.Text.Trim();
 
@@ -157,6 +178,8 @@ namespace HyperView.Forms
                 MessageBox.Show("Please enter a server name or IP address.", Globals.MsgBox.Warning,
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 textboxServer.Focus();
+                ButtonLogin.Enabled = true;
+                buttonCancel.Enabled = true;
                 _isConnecting = false;
                 return;
             }
@@ -168,6 +191,8 @@ namespace HyperView.Forms
                     MessageBox.Show("Please enter a username.", Globals.MsgBox.Warning,
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     textboxUsername.Focus();
+                    ButtonLogin.Enabled = true;
+                    buttonCancel.Enabled = true;
                     _isConnecting = false;
                     return;
                 }
@@ -177,6 +202,8 @@ namespace HyperView.Forms
                     MessageBox.Show("Please enter a password.", Globals.MsgBox.Warning,
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     textboxPassword.Focus();
+                    ButtonLogin.Enabled = true;
+                    buttonCancel.Enabled = true;
                     _isConnecting = false;
                     return;
                 }
@@ -192,11 +219,13 @@ namespace HyperView.Forms
                 ClearSavedCredentials();
             }
 
-            // Disable UI and show progress
+            // Disable UI and show progress (button already disabled above)
             string originalText = ButtonLogin.Text;
             ButtonLogin.Text = "Connecting...";
-            ButtonLogin.Enabled = false;
             this.Cursor = Cursors.WaitCursor;
+
+            FileLogger.Message($"Starting connection test to '{serverName}'",
+                FileLogger.EventType.Information, 1044);
 
             try
             {
@@ -256,14 +285,14 @@ namespace HyperView.Forms
                     // Hide login form and show main form
                     FileLogger.Message($"Hiding login form and showing MainForm...",
                         FileLogger.EventType.Information, 1039);
-                        
+
                     this.Hide();
 
                     using (MainForm mainForm = new MainForm())
                     {
                         FileLogger.Message($"MainForm created, showing dialog...",
                             FileLogger.EventType.Information, 1040);
-                            
+
                         var mainResult = mainForm.ShowDialog();
 
                         FileLogger.Message($"MainForm closed with result: {mainResult}",
@@ -330,8 +359,12 @@ namespace HyperView.Forms
             {
                 ButtonLogin.Text = originalText;
                 ButtonLogin.Enabled = true;
+                buttonCancel.Enabled = true;
                 this.Cursor = Cursors.Default;
                 _isConnecting = false; // Reset the flag
+
+                FileLogger.Message($"Login attempt completed, resetting UI",
+                    FileLogger.EventType.Information, 1045);
             }
         }
 
@@ -435,7 +468,7 @@ namespace HyperView.Forms
             {
                 FileLogger.Message($"Starting local Hyper-V module check...",
                     FileLogger.EventType.Information, 1030);
-                
+
                 using (Runspace runspace = RunspaceFactory.CreateRunspace())
                 {
                     runspace.Open();
@@ -449,14 +482,14 @@ namespace HyperView.Forms
 
                         FileLogger.Message($"Checking for Hyper-V module...",
                             FileLogger.EventType.Information, 1032);
-                        
+
                         var moduleResult = ps.Invoke();
 
                         if (moduleResult != null && moduleResult.Count > 0)
                         {
                             FileLogger.Message($"Hyper-V module found, testing VM access...",
                                 FileLogger.EventType.Information, 1033);
-                            
+
                             ps.Commands.Clear();
                             ps.AddScript("Get-VM -ErrorAction Stop");
 
@@ -464,7 +497,7 @@ namespace HyperView.Forms
                             {
                                 FileLogger.Message($"Executing Get-VM command...",
                                     FileLogger.EventType.Information, 1034);
-                                    
+
                                 var vmResult = ps.Invoke();
 
                                 FileLogger.Message($"Get-VM command completed, checking for errors...",
@@ -488,7 +521,7 @@ namespace HyperView.Forms
                                     {
                                         FileLogger.Message($"Access denied detected - elevation required",
                                             FileLogger.EventType.Warning, 1036);
-                                            
+
                                         return new ConnectionTestResult
                                         {
                                             Success = false,
@@ -533,7 +566,7 @@ namespace HyperView.Forms
                                 {
                                     FileLogger.Message($"Access denied detected in exception - elevation required",
                                         FileLogger.EventType.Warning, 1037);
-                                        
+
                                     return new ConnectionTestResult
                                     {
                                         Success = false,
@@ -554,7 +587,7 @@ namespace HyperView.Forms
                         {
                             FileLogger.Message($"Hyper-V module not found on local system",
                                 FileLogger.EventType.Error, 1038);
-                                
+
                             return new ConnectionTestResult
                             {
                                 Success = false,
@@ -570,7 +603,7 @@ namespace HyperView.Forms
                     FileLogger.EventType.Error, 1006);
                 FileLogger.Message($"Stack trace: {ex.StackTrace}",
                     FileLogger.EventType.Error, 1006);
-                    
+
                 return new ConnectionTestResult
                 {
                     Success = false,
@@ -583,7 +616,7 @@ namespace HyperView.Forms
         {
             Runspace tempRunspace = null;
             PSObject tempSession = null;
-            
+
             try
             {
                 FileLogger.Message($"Testing remote connection to '{serverName}' (Remote) with credentials of {credential?.UserName ?? "Windows Authentication"}",
@@ -627,10 +660,10 @@ namespace HyperView.Forms
                     {
                         var error = ps.Streams.Error[0];
                         string errorMsg = error.Exception?.Message ?? error.ToString();
-                        
+
                         FileLogger.Message($"PowerShell session creation failed: {errorMsg}",
                             FileLogger.EventType.Error, 1023);
-                        
+
                         return new ConnectionTestResult
                         {
                             Success = false,
@@ -642,7 +675,7 @@ namespace HyperView.Forms
                     {
                         FileLogger.Message($"PowerShell session creation returned no results",
                             FileLogger.EventType.Error, 1024);
-                            
+
                         return new ConnectionTestResult
                         {
                             Success = false,
@@ -681,10 +714,10 @@ namespace HyperView.Forms
                     {
                         var error = ps.Streams.Error[0];
                         string errorMsg = error.Exception?.Message ?? error.ToString();
-                        
+
                         FileLogger.Message($"Hyper-V test command failed: {errorMsg}",
                             FileLogger.EventType.Error, 1027);
-                        
+
                         return new ConnectionTestResult
                         {
                             Success = false,
@@ -714,10 +747,10 @@ namespace HyperView.Forms
                         else
                         {
                             string error = hashtable.ContainsKey("Error") ? hashtable["Error"]?.ToString() : "Unknown error";
-                            
+
                             FileLogger.Message($"Hyper-V not available on '{serverName}': {error}",
                                 FileLogger.EventType.Warning, 1028);
-                            
+
                             return new ConnectionTestResult
                             {
                                 Success = false,
@@ -728,7 +761,7 @@ namespace HyperView.Forms
 
                     FileLogger.Message($"No results returned from Hyper-V test on '{serverName}'",
                         FileLogger.EventType.Error, 1029);
-                        
+
                     return new ConnectionTestResult
                     {
                         Success = false,
@@ -742,7 +775,7 @@ namespace HyperView.Forms
                     FileLogger.EventType.Error, 1009);
                 FileLogger.Message($"Stack trace: {ex.StackTrace}",
                     FileLogger.EventType.Error, 1009);
-                    
+
                 return new ConnectionTestResult
                 {
                     Success = false,
@@ -769,7 +802,7 @@ namespace HyperView.Forms
                         // Ignore cleanup errors
                     }
                 }
-                
+
                 // Clean up the temporary runspace
                 if (tempRunspace != null)
                 {
@@ -849,7 +882,7 @@ namespace HyperView.Forms
                     writer.Write(encryptedPassword);
                 }
 
-                FileLogger.Message($"Credentials saved (encrypted) for server '{server}'", 
+                FileLogger.Message($"Credentials saved (encrypted) for server '{server}'",
                     FileLogger.EventType.Information, 1010);
             }
             catch (Exception ex)
@@ -887,7 +920,7 @@ namespace HyperView.Forms
                     byte[] passwordBytes = ProtectedData.Unprotect(encryptedPassword, null, DataProtectionScope.CurrentUser);
 
                     string storedServer = Encoding.UTF8.GetString(serverBytes);
-                    
+
                     // Verify the server name matches (security check)
                     if (!storedServer.Equals(serverName, StringComparison.OrdinalIgnoreCase))
                     {
@@ -956,7 +989,7 @@ namespace HyperView.Forms
                     try
                     {
                         File.Delete(credFile);
-                        FileLogger.Message("Migrated credentials to new server-specific format", 
+                        FileLogger.Message("Migrated credentials to new server-specific format",
                             FileLogger.EventType.Information, 1021);
                     }
                     catch { }
@@ -975,7 +1008,7 @@ namespace HyperView.Forms
             try
             {
                 string serverName = textboxServer.Text.Trim();
-                
+
                 if (string.IsNullOrWhiteSpace(serverName))
                     return;
 
@@ -986,7 +1019,7 @@ namespace HyperView.Forms
                 if (File.Exists(credFile))
                 {
                     File.Delete(credFile);
-                    FileLogger.Message($"Saved credentials cleared for server '{serverName}'", 
+                    FileLogger.Message($"Saved credentials cleared for server '{serverName}'",
                         FileLogger.EventType.Information, 1014);
                 }
             }

@@ -111,6 +111,7 @@
             buttonCancel.TabIndex = 8;
             buttonCancel.Text = "Cancel";
             buttonCancel.UseVisualStyleBackColor = true;
+            buttonCancel.Click += ButtonCancel_Click;
             // 
             // ButtonLogin
             // 
@@ -182,6 +183,7 @@
             radioCustom.TabStop = true;
             radioCustom.Text = "Use specific credentials";
             radioCustom.UseVisualStyleBackColor = true;
+            radioCustom.CheckedChanged += RadioAuth_CheckedChanged;
             // 
             // radioWindows
             // 
@@ -195,6 +197,7 @@
             radioWindows.TabStop = true;
             radioWindows.Text = "Use current Windows session credentials";
             radioWindows.UseVisualStyleBackColor = true;
+            radioWindows.CheckedChanged += RadioAuth_CheckedChanged;
             // 
             // LoginForm
             // 
