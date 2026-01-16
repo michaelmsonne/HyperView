@@ -458,8 +458,10 @@ namespace HyperView.Forms
 
                                 int vmCount = vmResult?.Count ?? 0;
 
-                                FileLogger.Message($"Local Hyper-V access successful. Found {vmCount} VMs.", 
+                                FileLogger.Message($"Local Hyper-V access successful.",
                                     FileLogger.EventType.Information, 1005);
+                                // FileLogger.Message($"Local Hyper-V access successful. Found {vmCount} VMs.", 
+                                //    FileLogger.EventType.Information, 1005);
 
                                 return new ConnectionTestResult
                                 {
