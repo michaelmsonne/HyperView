@@ -90,7 +90,15 @@ namespace HyperView
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
-            
+
+            // Only perform cleanup if the form is actually closing (not cancelled by user)
+            if (e.Cancel)
+            {
+                FileLogger.Message("Form closing cancelled - skipping cleanup",
+                    FileLogger.EventType.Information, 2014);
+                return;
+            }
+
             // Clean up remote session if exists
             if (_psSession != null && _persistentRunspace != null)
             {
@@ -182,27 +190,27 @@ namespace HyperView
                     row["State"] = vm.Properties["State"]?.Value?.ToString() ?? "";
                     row["CPU Count"] = vm.Properties["ProcessorCount"]?.Value?.ToString() ?? "";
                     row["CPU Usage %"] = vm.Properties["CPUUsage"]?.Value?.ToString() ?? "";
-                    
+
                     // Memory values - convert from bytes to MB
                     var memAssigned = vm.Properties["MemoryAssigned"]?.Value;
                     row["Memory Assigned (MB)"] = memAssigned != null ? ((long)memAssigned / 1048576).ToString() : "";
-                    
+
                     var memDemand = vm.Properties["MemoryDemand"]?.Value;
                     row["Memory Demand (MB)"] = memDemand != null ? ((long)memDemand / 1048576).ToString() : "";
-                    
+
                     var memStartup = vm.Properties["MemoryStartup"]?.Value;
                     row["Memory Startup (MB)"] = memStartup != null ? ((long)memStartup / 1048576).ToString() : "";
-                    
+
                     var dynamicMem = vm.Properties["DynamicMemoryEnabled"]?.Value;
                     row["Dynamic Memory"] = dynamicMem != null && (bool)dynamicMem ? "Yes" : "No";
-                    
+
                     // Get hard drive info
                     var vmName = vm.Properties["Name"]?.Value?.ToString();
                     if (!string.IsNullOrEmpty(vmName))
                     {
                         var totalDiskGB = GetVMTotalDiskSize(vmName);
                         row["Total Disk (GB)"] = totalDiskGB > 0 ? totalDiskGB.ToString("F2") : "";
-                        
+
                         var networkAdapterCount = GetVMNetworkAdapterCount(vmName);
                         row["Network Adapters"] = networkAdapterCount.ToString();
                     }
@@ -211,22 +219,22 @@ namespace HyperView
                         row["Total Disk (GB)"] = "";
                         row["Network Adapters"] = "";
                     }
-                    
+
                     row["Generation"] = vm.Properties["Generation"]?.Value?.ToString() ?? "";
-                    
+
                     // Format uptime
                     var uptime = vm.Properties["Uptime"]?.Value;
                     row["Uptime"] = uptime != null ? FormatTimeSpan((TimeSpan)uptime) : "";
-                    
+
                     row["Heartbeat"] = vm.Properties["Heartbeat"]?.Value?.ToString() ?? "";
-                    
+
                     // Integration services version
                     var integrationServicesVersion = vm.Properties["IntegrationServicesVersion"]?.Value;
                     row["Integration Services"] = integrationServicesVersion?.ToString() ?? "";
-                    
+
                     row["Auto Start"] = vm.Properties["AutomaticStartAction"]?.Value?.ToString() ?? "";
                     row["Auto Stop"] = vm.Properties["AutomaticStopAction"]?.Value?.ToString() ?? "";
-                    
+
                     // Get VM groups
                     if (!string.IsNullOrEmpty(vmName))
                     {
@@ -237,9 +245,9 @@ namespace HyperView
                     {
                         row["VM Groups"] = "";
                     }
-                    
+
                     row["Checkpoint Type"] = vm.Properties["CheckpointType"]?.Value?.ToString() ?? "";
-                    
+
                     // Get checkpoint count
                     if (!string.IsNullOrEmpty(vmName))
                     {
@@ -250,24 +258,24 @@ namespace HyperView
                     {
                         row["Checkpoints"] = "";
                     }
-                    
+
                     var replicationState = vm.Properties["ReplicationState"]?.Value?.ToString();
                     row["Replication"] = !string.IsNullOrEmpty(replicationState) ? replicationState : "Not Configured";
-                    
+
                     var creationTime = vm.Properties["CreationTime"]?.Value;
                     row["Created"] = creationTime != null ? ((DateTime)creationTime).ToString("yyyy-MM-dd HH:mm") : "";
-                    
+
                     var isClustered = vm.Properties["IsClustered"]?.Value;
                     row["Is Clustered"] = isClustered != null && (bool)isClustered ? "Yes" : "No";
-                    
+
                     row["Categories"] = "";
-                    
+
                     dataTable.Rows.Add(row);
                 }
 
                 // Bind to DataGridView
                 datagridviewVMOverView.DataSource = dataTable;
-                
+
                 // Configure DataGridView properties
                 datagridviewVMOverView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
                 datagridviewVMOverView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
@@ -276,7 +284,7 @@ namespace HyperView
                 datagridviewVMOverView.AllowUserToAddRows = false;
                 datagridviewVMOverView.AllowUserToDeleteRows = false;
                 datagridviewVMOverView.RowHeadersVisible = false;
-                
+
                 // Apply color coding
                 ApplyColorCoding();
             }
@@ -377,10 +385,10 @@ namespace HyperView
             try
             {
                 var results = ExecutePowerShellCommand($"Get-VMHardDiskDrive -VMName '{vmName}'");
-                
+
                 if (results == null || results.Count == 0)
                     return 0;
-                
+
                 double totalGB = 0;
                 foreach (var hdd in results)
                 {
@@ -404,7 +412,7 @@ namespace HyperView
                         }
                     }
                 }
-                
+
                 return totalGB;
             }
             catch
@@ -431,12 +439,12 @@ namespace HyperView
             try
             {
                 var results = ExecutePowerShellCommand($"Get-VMGroup | Where-Object {{ $_.VMMembers.Name -contains '{vmName}' }} | Select-Object -ExpandProperty Name");
-                
+
                 if (results != null && results.Count > 0)
                 {
                     return string.Join(", ", results.Select(g => g.ToString()));
                 }
-                
+
                 return "";
             }
             catch
@@ -486,7 +494,7 @@ namespace HyperView
                             break;
                     }
                 }
-                
+
                 // Color code Heartbeat status
                 if (row.Cells["Heartbeat"] != null && row.Cells["Heartbeat"].Value != null)
                 {
@@ -504,7 +512,7 @@ namespace HyperView
                         row.Cells["Heartbeat"].Style.BackColor = Color.LightCoral;
                     }
                 }
-                
+
                 // Color code Dynamic Memory
                 if (row.Cells["Dynamic Memory"] != null && row.Cells["Dynamic Memory"].Value != null)
                 {
@@ -514,7 +522,7 @@ namespace HyperView
                         row.Cells["Dynamic Memory"].Style.BackColor = Color.LightBlue;
                     }
                 }
-                
+
                 // Color code Replication status
                 if (row.Cells["Replication"] != null && row.Cells["Replication"].Value != null)
                 {
@@ -524,6 +532,45 @@ namespace HyperView
                         row.Cells["Replication"].Style.BackColor = Color.LightGreen;
                     }
                 }
+            }
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // Check if there's an active Hyper-V connection
+            if (SessionContext.IsSessionActive())
+            {
+                FileLogger.Message("User is closing the application with active connection",
+                    FileLogger.EventType.Information, 2012);
+
+                // Show confirmation dialog similar to disconnect button
+                var confirmResult = MessageBox.Show(
+                    $"Are you sure you want to disconnect from Hyper-V (server: '{SessionContext.ServerName}') and close the application?",
+                    "Confirm Exit",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (confirmResult == DialogResult.Yes)
+                {
+                    FileLogger.Message($"User confirmed exit - disconnecting from Hyper-V server '{SessionContext.ServerName}'...",
+                        FileLogger.EventType.Information, 2013);
+
+                    // Cleanup will be handled by OnFormClosing after this event handler completes
+                    // Allow the form to close
+                }
+                else
+                {
+                    // User cancelled - prevent form from closing
+                    FileLogger.Message("User cancelled exit - keeping application open",
+                        FileLogger.EventType.Information, 2015);
+                    e.Cancel = true;
+                }
+            }
+            else
+            {
+                // No active connection - just log and close
+                FileLogger.Message("Form closing event triggered - no active connection",
+                    FileLogger.EventType.Information, 2016);
             }
         }
     }
