@@ -573,5 +573,147 @@ namespace HyperView
                     FileLogger.EventType.Information, 2016);
             }
         }
+
+        private void disconnectToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                FileLogger.Message("User initiated disconnect from Hyper-V",
+                    FileLogger.EventType.Information, 2017);
+
+                // Check if there's an active connection
+                if (!SessionContext.IsSessionActive())
+                {
+                    MessageBox.Show("No active connection to disconnect.", "Information",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                // Show confirmation dialog
+                var confirmResult = MessageBox.Show(
+                    $"Are you sure you want to disconnect from Hyper-V (server: '{SessionContext.ServerName}')?",
+                    "Confirm Disconnect",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (confirmResult == DialogResult.Yes)
+                {
+                    FileLogger.Message($"User confirmed disconnect from Hyper-V server '{SessionContext.ServerName}'",
+                        FileLogger.EventType.Information, 2018);
+
+                    // Disable disconnect menu item during operation to prevent double-clicks
+                    disconnectToolStripMenuItem.Enabled = false;
+
+                    // Store server name before clearing
+                    string disconnectedServer = SessionContext.ServerName;
+
+                    // Clean up remote session if exists
+                    if (_psSession != null && _persistentRunspace != null)
+                    {
+                        try
+                        {
+                            using (PowerShell ps = PowerShell.Create())
+                            {
+                                ps.Runspace = _persistentRunspace;
+                                ps.AddCommand("Remove-PSSession")
+                                  .AddParameter("Session", _psSession);
+                                ps.Invoke();
+                            }
+                            FileLogger.Message("Remote PowerShell session closed during disconnect",
+                                FileLogger.EventType.Information, 2019);
+                        }
+                        catch (Exception ex)
+                        {
+                            FileLogger.Message($"Error closing PS session during disconnect: {ex.Message}",
+                                FileLogger.EventType.Warning, 2020);
+                        }
+                    }
+
+                    // Dispose persistent runspace
+                    if (_persistentRunspace != null)
+                    {
+                        try
+                        {
+                            _persistentRunspace.Close();
+                            _persistentRunspace.Dispose();
+                            _persistentRunspace = null;
+                            FileLogger.Message("Persistent runspace closed during disconnect",
+                                FileLogger.EventType.Information, 2021);
+                        }
+                        catch (Exception ex)
+                        {
+                            FileLogger.Message($"Error closing persistent runspace during disconnect: {ex.Message}",
+                                FileLogger.EventType.Warning, 2022);
+                        }
+                    }
+
+                    // Clear PS session reference
+                    _psSession = null;
+
+                    // Clear global connection data (SessionContext)
+                    SessionContext.Clear();
+
+                    FileLogger.Message($"Successfully disconnected from Hyper-V server '{disconnectedServer}'",
+                        FileLogger.EventType.Information, 2023);
+
+                    // Hide main form temporarily
+                    this.Hide();
+
+                    FileLogger.Message("Showing login form for reconnection...",
+                        FileLogger.EventType.Information, 2024);
+
+                    // Show login form for reconnection
+                    using (Forms.LoginForm loginForm = new Forms.LoginForm())
+                    {
+                        var loginResult = loginForm.ShowDialog();
+
+                        if (loginResult == DialogResult.OK && loginForm.Result != null && loginForm.Result.Success)
+                        {
+                            // Authentication successful - close current form and open new MainForm
+                            FileLogger.Message($"Reconnected successfully to '{loginForm.Result.ServerName}'",
+                                FileLogger.EventType.Information, 2025);
+
+                            // Close current MainForm (will trigger cleanup)
+                            this.DialogResult = DialogResult.OK;
+                            this.Close();
+
+                            // The LoginForm will handle showing the new MainForm
+                        }
+                        else
+                        {
+                            // Authentication failed or cancelled - close application
+                            FileLogger.Message("Authentication cancelled after disconnect - closing application",
+                                FileLogger.EventType.Information, 2026);
+                            
+                            this.DialogResult = DialogResult.Cancel;
+                            this.Close();
+                        }
+                    }
+                }
+                else
+                {
+                    // User cancelled disconnect
+                    FileLogger.Message("User cancelled disconnect operation",
+                        FileLogger.EventType.Information, 2027);
+                }
+            }
+            catch (Exception ex)
+            {
+                string errorMsg = $"Error during disconnect: {ex.Message}";
+                FileLogger.Message(errorMsg, FileLogger.EventType.Error, 2028);
+
+                // Re-enable disconnect menu item so user can try again
+                disconnectToolStripMenuItem.Enabled = true;
+
+                // Show error to user
+                MessageBox.Show($"Failed to disconnect from Hyper-V:\n\n{ex.Message}",
+                    "Disconnect Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+
+                // Show the form again if it was hidden
+                this.Show();
+            }
+        }
     }
 }
