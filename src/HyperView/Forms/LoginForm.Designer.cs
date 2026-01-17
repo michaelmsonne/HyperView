@@ -220,13 +220,15 @@
             statusStripLoginForm.Location = new Point(0, 428);
             statusStripLoginForm.Name = "statusStripLoginForm";
             statusStripLoginForm.Size = new Size(432, 22);
+            statusStripLoginForm.SizingGrip = false;
             statusStripLoginForm.TabIndex = 6;
             statusStripLoginForm.Text = "statusStrip1";
             // 
             // toolStripStatusLabelLoginForm
             // 
+            toolStripStatusLabelLoginForm.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             toolStripStatusLabelLoginForm.Name = "toolStripStatusLabelLoginForm";
-            toolStripStatusLabelLoginForm.Size = new Size(42, 17);
+            toolStripStatusLabelLoginForm.Size = new Size(45, 17);
             toolStripStatusLabelLoginForm.Text = "Status:";
             // 
             // toolStripStatusLabelTextLoginForm

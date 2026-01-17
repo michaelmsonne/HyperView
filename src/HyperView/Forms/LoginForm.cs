@@ -1,11 +1,13 @@
-﻿using System.Management.Automation;
+﻿using HyperView.Class;
+using System.Management;
+using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Net.Sockets;
 using System.Security;
 using System.Security.Cryptography;
 using System.Security.Principal;
+using System.ServiceProcess;
 using System.Text;
-using HyperView.Class;
 
 namespace HyperView.Forms
 {
@@ -55,7 +57,7 @@ namespace HyperView.Forms
                 {
                     textboxServer.Text = Environment.MachineName;
                     UpdateStatusLabel("Ready - Local Hyper-V detected", isSuccess: true);
-                    FileLogger.Message($"Local Hyper-V installation detected - default server set to: {Environment.MachineName}",
+                    FileLogger.Message($"Local Hyper-V installation detected - default server set to: '{Environment.MachineName}'",
                         FileLogger.EventType.Information, 1048);
                 }
                 else
@@ -81,15 +83,15 @@ namespace HyperView.Forms
             FileLogger.Message("Testing for local Hyper-V installation...",
                 FileLogger.EventType.Information, 1051);
 
-            // Method 1: Check for Hyper-V Windows Feature (Windows 10/11)
-            if (TestHyperVWindowsFeature())
-                return true;
-
-            // Method 2: Check for Hyper-V service
+            // Method 1: Service check
             if (TestHyperVService())
                 return true;
 
-            // Method 3: Check for Hyper-V Windows Feature using Management Objects (Server)
+            // Method 2: Windows Feature check
+            if (TestHyperVWindowsFeature())
+                return true;
+
+            // Method 3: Server Role check
             if (TestHyperVServerRole())
                 return true;
 
@@ -98,29 +100,75 @@ namespace HyperView.Forms
             return false;
         }
 
+        private bool TestHyperVService()
+        {
+            try
+            {
+                FileLogger.Message("Checking Hyper-V service...",
+                    FileLogger.EventType.Information, 1072);
+
+                using (ServiceController sc = new ServiceController("vmms"))
+                {
+                    // Check if service exists by accessing its status
+                    // This will throw InvalidOperationException if service doesn't exist
+                    var status = sc.Status;
+
+                    FileLogger.Message($"Hyper-V service detected (Status: {status})",
+                        FileLogger.EventType.Information, 1073);
+
+                    if (status == ServiceControllerStatus.Running)
+                    {
+                        FileLogger.Message("Hyper-V Virtual Machine Management service is running",
+                            FileLogger.EventType.Information, 1074);
+                        return true;
+                    }
+                    else
+                    {
+                        FileLogger.Message($"Hyper-V service exists but is not running (Status: {status})",
+                            FileLogger.EventType.Warning, 1075);
+                        return false;
+                    }
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // Service doesn't exist
+                FileLogger.Message("Hyper-V Virtual Machine Management service not found",
+                    FileLogger.EventType.Information, 1076);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Error checking Hyper-V service: {ex.Message}",
+                    FileLogger.EventType.Warning, 1077);
+                return false;
+            }
+        }
+
         private bool TestHyperVWindowsFeature()
         {
             try
             {
-                FileLogger.Message("Checking Windows Optional Feature for Hyper-V...",
+                FileLogger.Message("Checking Windows Optional Feature for Hyper-V using (WMI)...",
                     FileLogger.EventType.Information, 1053);
 
-                using (PowerShell ps = PowerShell.Create())
+                // Query Win32_OptionalFeature for Hyper-V related features
+                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(
+                    "root\\CIMV2",
+                    "SELECT Name, InstallState FROM Win32_OptionalFeature WHERE Name LIKE '%Hyper-V%' OR Name = 'Microsoft-Hyper-V'"))
                 {
-                    ps.AddScript("Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -ErrorAction SilentlyContinue");
-                    var results = ps.Invoke();
-
-                    if (results != null && results.Count > 0)
+                    foreach (ManagementObject feature in searcher.Get())
                     {
-                        var feature = results[0];
-                        var state = feature.Properties["State"]?.Value?.ToString();
+                        string featureName = feature["Name"]?.ToString();
+                        uint installState = Convert.ToUInt32(feature["InstallState"]);
 
-                        if (state == "Enabled")
+                        // InstallState values: 1 = Enabled, 2 = Disabled, 3 = Absent
+                        if (installState == 1)
                         {
-                            FileLogger.Message("Hyper-V feature detected as enabled",
+                            FileLogger.Message($"Hyper-V feature detected as enabled: {featureName}",
                                 FileLogger.EventType.Information, 1054);
 
-                            // Verify service is running
+                            // Verify service is running using 
                             if (TestHyperVServiceStatus())
                             {
                                 return true;
@@ -133,7 +181,15 @@ namespace HyperView.Forms
                             }
                         }
                     }
+
+                    FileLogger.Message("No enabled Hyper-V features found in WMI",
+                        FileLogger.EventType.Information, 1083);
                 }
+            }
+            catch (ManagementException ex)
+            {
+                FileLogger.Message($"WMI query for Windows Optional Features failed: {ex.Message}",
+                    FileLogger.EventType.Information, 1056);
             }
             catch (Exception ex)
             {
@@ -144,86 +200,47 @@ namespace HyperView.Forms
             return false;
         }
 
-        private bool TestHyperVService()
-        {
-            try
-            {
-                FileLogger.Message("Checking Hyper-V service...",
-                    FileLogger.EventType.Information, 1057);
-
-                using (PowerShell ps = PowerShell.Create())
-                {
-                    ps.AddScript("Get-Service -Name vmms -ErrorAction SilentlyContinue");
-                    var results = ps.Invoke();
-
-                    if (results != null && results.Count > 0)
-                    {
-                        var service = results[0];
-                        var status = service.Properties["Status"]?.Value?.ToString();
-
-                        FileLogger.Message("Hyper-V service detected",
-                            FileLogger.EventType.Information, 1058);
-
-                        if (status == "Running")
-                        {
-                            FileLogger.Message("Hyper-V service is running",
-                                FileLogger.EventType.Information, 1059);
-                            return true;
-                        }
-                        else
-                        {
-                            FileLogger.Message($"Hyper-V service exists but is not running (Status: {status})",
-                                FileLogger.EventType.Warning, 1060);
-                            return false;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                FileLogger.Message($"Hyper-V service check failed: {ex.Message}",
-                    FileLogger.EventType.Information, 1061);
-            }
-
-            return false;
-        }
-
         private bool TestHyperVServerRole()
         {
             try
             {
-                FileLogger.Message("Checking Windows Server role for Hyper-V...",
+                FileLogger.Message("Checking Windows Server role for Hyper-V using (WMI)...",
                     FileLogger.EventType.Information, 1062);
 
-                using (PowerShell ps = PowerShell.Create())
+                // Query Win32_ServerFeature for Hyper-V role
+                // Hyper-V role ID is typically 20 (Microsoft-Hyper-V)
+                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(
+                    "root\\CIMV2",
+                    "SELECT Name, ID FROM Win32_ServerFeature WHERE Name LIKE '%Hyper-V%'"))
                 {
-                    ps.AddScript("Get-WindowsFeature -Name Hyper-V -ErrorAction SilentlyContinue");
-                    var results = ps.Invoke();
-
-                    if (results != null && results.Count > 0)
+                    foreach (ManagementObject feature in searcher.Get())
                     {
-                        var feature = results[0];
-                        var installState = feature.Properties["InstallState"]?.Value?.ToString();
+                        string featureName = feature["Name"]?.ToString();
+                        
+                        FileLogger.Message($"Hyper-V role detected on Windows Server: {featureName}",
+                            FileLogger.EventType.Information, 1063);
 
-                        if (installState == "Installed")
+                        // Verify service is running using 
+                        if (TestHyperVServiceStatus())
                         {
-                            FileLogger.Message("Hyper-V role detected on Windows Server",
-                                FileLogger.EventType.Information, 1063);
-
-                            // Verify service is running
-                            if (TestHyperVServiceStatus())
-                            {
-                                return true;
-                            }
-                            else
-                            {
-                                FileLogger.Message("Hyper-V role is installed but service is not running",
-                                    FileLogger.EventType.Warning, 1064);
-                                return false;
-                            }
+                            return true;
+                        }
+                        else
+                        {
+                            FileLogger.Message("Hyper-V role is installed but service is not running",
+                                FileLogger.EventType.Warning, 1064);
+                            return false;
                         }
                     }
+                    
+                    FileLogger.Message("No Hyper-V server roles found in WMI",
+                        FileLogger.EventType.Information, 1084);
                 }
+            }
+            catch (ManagementException ex)
+            {
+                FileLogger.Message($"WMI query for Windows Server roles failed: {ex.Message}",
+                    FileLogger.EventType.Information, 1065);
             }
             catch (Exception ex)
             {
@@ -239,43 +256,36 @@ namespace HyperView.Forms
             try
             {
                 FileLogger.Message("Checking Hyper-V service status...",
-                    FileLogger.EventType.Information, 1066);
+                    FileLogger.EventType.Information, 1078);
 
-                using (PowerShell ps = PowerShell.Create())
+                using (ServiceController sc = new ServiceController("vmms"))
                 {
-                    ps.AddScript("Get-Service -Name vmms -ErrorAction SilentlyContinue");
-                    var results = ps.Invoke();
+                    var status = sc.Status;
 
-                    if (results != null && results.Count > 0)
+                    if (status == ServiceControllerStatus.Running)
                     {
-                        var service = results[0];
-                        var status = service.Properties["Status"]?.Value?.ToString();
-
-                        if (status == "Running")
-                        {
-                            FileLogger.Message("Hyper-V Virtual Machine Management service is running",
-                                FileLogger.EventType.Information, 1067);
-                            return true;
-                        }
-                        else
-                        {
-                            FileLogger.Message($"Hyper-V Virtual Machine Management service is not running (Status: {status})",
-                                FileLogger.EventType.Warning, 1068);
-                            return false;
-                        }
+                        FileLogger.Message("Hyper-V Virtual Machine Management service is running",
+                            FileLogger.EventType.Information, 1079);
+                        return true;
                     }
                     else
                     {
-                        FileLogger.Message("Hyper-V Virtual Machine Management service not found",
-                            FileLogger.EventType.Warning, 1069);
+                        FileLogger.Message($"Hyper-V Virtual Machine Management service is not running (Status: {status})",
+                            FileLogger.EventType.Warning, 1080);
                         return false;
                     }
                 }
             }
+            catch (InvalidOperationException)
+            {
+                FileLogger.Message("Hyper-V Virtual Machine Management service not found",
+                    FileLogger.EventType.Warning, 1081);
+                return false;
+            }
             catch (Exception ex)
             {
                 FileLogger.Message($"Error checking Hyper-V service status: {ex.Message}",
-                    FileLogger.EventType.Error, 1070);
+                    FileLogger.EventType.Error, 1082);
                 return false;
             }
         }
@@ -306,12 +316,6 @@ namespace HyperView.Forms
                 FileLogger.Message($"Error updating status label: {ex.Message}",
                     FileLogger.EventType.Warning, 1071);
             }
-        }
-
-        private void SetDefaultServer()
-        {
-            // This method is now replaced by InitializeHyperVDefaults
-            // Keeping for backward compatibility but not doing anything
         }
 
         private void SetToolName()
@@ -696,7 +700,7 @@ namespace HyperView.Forms
                     var localIPs = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
                         .Where(ni => ni.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up)
                         .SelectMany(ni => ni.GetIPProperties().UnicastAddresses)
-                        .Where(addr => addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                        .Where(addr => addr.Address.AddressFamily == AddressFamily.InterNetwork)
                         .Select(addr => addr.Address.ToString())
                         .Where(ip => !ip.StartsWith("169.254.")) // Exclude APIPA addresses
                         .Distinct()
@@ -1392,4 +1396,3 @@ namespace HyperView.Forms
         }
     }
 }
-

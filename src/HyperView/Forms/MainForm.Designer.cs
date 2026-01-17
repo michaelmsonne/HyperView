@@ -32,6 +32,9 @@
             datagridviewVMOverView = new DataGridView();
             tabcontrolMainForm = new TabControl();
             tabpagehvOverview = new TabPage();
+            buttonSummaryhvOverviewView = new Button();
+            buttonLoadVMsrefresh = new Button();
+            labelOverviewHelpText = new Label();
             tabpageVMGroups = new TabPage();
             tabpageManageNetwork = new TabPage();
             tabpagehvHosts = new TabPage();
@@ -66,9 +69,6 @@
             toolStripStatusLabelMainForm = new ToolStripStatusLabel();
             toolStripStatusLabelTextMainForm = new ToolStripStatusLabel();
             groupBoxMainFormServerDetails = new GroupBox();
-            labelOverviewHelpText = new Label();
-            buttonLoadVMsrefresh = new Button();
-            buttonSummaryhvOverviewView = new Button();
             ((System.ComponentModel.ISupportInitialize)datagridviewVMOverView).BeginInit();
             tabcontrolMainForm.SuspendLayout();
             tabpagehvOverview.SuspendLayout();
@@ -124,6 +124,35 @@
             tabpagehvOverview.TabIndex = 0;
             tabpagehvOverview.Text = "hvOverview";
             tabpagehvOverview.UseVisualStyleBackColor = true;
+            // 
+            // buttonSummaryhvOverviewView
+            // 
+            buttonSummaryhvOverviewView.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            buttonSummaryhvOverviewView.Location = new Point(1416, 6);
+            buttonSummaryhvOverviewView.Name = "buttonSummaryhvOverviewView";
+            buttonSummaryhvOverviewView.Size = new Size(75, 23);
+            buttonSummaryhvOverviewView.TabIndex = 3;
+            buttonSummaryhvOverviewView.Text = "Summary";
+            buttonSummaryhvOverviewView.UseVisualStyleBackColor = true;
+            // 
+            // buttonLoadVMsrefresh
+            // 
+            buttonLoadVMsrefresh.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            buttonLoadVMsrefresh.Location = new Point(1497, 6);
+            buttonLoadVMsrefresh.Name = "buttonLoadVMsrefresh";
+            buttonLoadVMsrefresh.Size = new Size(110, 23);
+            buttonLoadVMsrefresh.TabIndex = 2;
+            buttonLoadVMsrefresh.Text = "&Load VMs/refresh";
+            buttonLoadVMsrefresh.UseVisualStyleBackColor = true;
+            // 
+            // labelOverviewHelpText
+            // 
+            labelOverviewHelpText.AutoSize = true;
+            labelOverviewHelpText.Location = new Point(6, 3);
+            labelOverviewHelpText.Name = "labelOverviewHelpText";
+            labelOverviewHelpText.Size = new Size(705, 30);
+            labelOverviewHelpText.TabIndex = 1;
+            labelOverviewHelpText.Text = "This view provides provides overview and core functionality within the Hyper-V space for information about VMs and other data that\r\nextends that functionality over multiple servers.";
             // 
             // tabpageVMGroups
             // 
@@ -369,6 +398,7 @@
             statusStripMainForm.Location = new Point(0, 977);
             statusStripMainForm.Name = "statusStripMainForm";
             statusStripMainForm.Size = new Size(1645, 22);
+            statusStripMainForm.SizingGrip = false;
             statusStripMainForm.TabIndex = 3;
             statusStripMainForm.Text = "statusStrip1";
             // 
@@ -386,39 +416,13 @@
             // 
             // groupBoxMainFormServerDetails
             // 
+            groupBoxMainFormServerDetails.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             groupBoxMainFormServerDetails.Location = new Point(12, 905);
             groupBoxMainFormServerDetails.Name = "groupBoxMainFormServerDetails";
             groupBoxMainFormServerDetails.Size = new Size(449, 58);
             groupBoxMainFormServerDetails.TabIndex = 4;
             groupBoxMainFormServerDetails.TabStop = false;
             groupBoxMainFormServerDetails.Text = "Details";
-            // 
-            // labelOverviewHelpText
-            // 
-            labelOverviewHelpText.AutoSize = true;
-            labelOverviewHelpText.Location = new Point(6, 3);
-            labelOverviewHelpText.Name = "labelOverviewHelpText";
-            labelOverviewHelpText.Size = new Size(705, 30);
-            labelOverviewHelpText.TabIndex = 1;
-            labelOverviewHelpText.Text = "This view provides provides overview and core functionality within the Hyper-V space for information about VMs and other data that\r\nextends that functionality over multiple servers.";
-            // 
-            // buttonLoadVMsrefresh
-            // 
-            buttonLoadVMsrefresh.Location = new Point(1497, 6);
-            buttonLoadVMsrefresh.Name = "buttonLoadVMsrefresh";
-            buttonLoadVMsrefresh.Size = new Size(110, 23);
-            buttonLoadVMsrefresh.TabIndex = 2;
-            buttonLoadVMsrefresh.Text = "&Load VMs/refresh";
-            buttonLoadVMsrefresh.UseVisualStyleBackColor = true;
-            // 
-            // buttonSummaryhvOverviewView
-            // 
-            buttonSummaryhvOverviewView.Location = new Point(1416, 6);
-            buttonSummaryhvOverviewView.Name = "buttonSummaryhvOverviewView";
-            buttonSummaryhvOverviewView.Size = new Size(75, 23);
-            buttonSummaryhvOverviewView.TabIndex = 3;
-            buttonSummaryhvOverviewView.Text = "Summary";
-            buttonSummaryhvOverviewView.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 
