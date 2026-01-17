@@ -1049,7 +1049,7 @@ namespace HyperView.Forms
 
             try
             {
-                FileLogger.Message($"Testing remote connection to '{serverName}' with credentials of {credential?.UserName ?? "Windows Authentication"}",
+                FileLogger.Message($"Testing remote connection to '{serverName}' with credentials of '{credential?.UserName ?? "Windows Authentication"}'",
                     FileLogger.EventType.Information, 1007);
 
                 // Test basic connectivity
