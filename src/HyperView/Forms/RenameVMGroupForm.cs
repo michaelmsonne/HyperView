@@ -14,19 +14,6 @@ namespace HyperView.Forms
         public RenameVMGroupForm()
         {
             InitializeComponent();
-            InitializeForm();
-        }
-
-        private void InitializeForm()
-        {
-            // Set up event handlers
-            this.Load += RenameVMGroupForm_Load;
-
-            if (buttonOK != null)
-                buttonOK.Click += ButtonOK_Click;
-
-            if (buttonCancel != null)
-                buttonCancel.Click += ButtonCancel_Click;
         }
 
         private void RenameVMGroupForm_Load(object sender, EventArgs e)

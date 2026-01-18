@@ -535,15 +535,15 @@ namespace HyperView
             }
         }
 
-        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        private bool ConfirmDisconnectAndExit()
         {
             // Check if there's an active Hyper-V connection
             if (SessionContext.IsSessionActive())
             {
-                FileLogger.Message("User is closing the application with active connection",
+                FileLogger.Message("User is attempting to close the application with active connection",
                     FileLogger.EventType.Information, 2012);
 
-                // Show confirmation dialog similar to disconnect button
+                // Show confirmation dialog
                 var confirmResult = MessageBox.Show(
                     $"Are you sure you want to disconnect from Hyper-V (server: '{SessionContext.ServerName}') and close the application?",
                     "Confirm Exit",
@@ -555,22 +555,32 @@ namespace HyperView
                     FileLogger.Message($"User confirmed exit - disconnecting from Hyper-V server '{SessionContext.ServerName}'...",
                         FileLogger.EventType.Information, 2013);
 
-                    // Cleanup will be handled by OnFormClosing after this event handler completes
-                    // Allow the form to close
+                    // Cleanup will be handled by OnFormClosing
+                    return true;
                 }
                 else
                 {
-                    // User cancelled - prevent form from closing
+                    // User cancelled
                     FileLogger.Message("User cancelled exit - keeping application open",
                         FileLogger.EventType.Information, 2015);
-                    e.Cancel = true;
+                    return false;
                 }
             }
             else
             {
-                // No active connection - just log and close
-                FileLogger.Message("Form closing event triggered - no active connection",
+                // No active connection - allow close
+                FileLogger.Message("No active connection - proceeding with exit",
                     FileLogger.EventType.Information, 2016);
+                return true;
+            }
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // Use the shared confirmation function
+            if (!ConfirmDisconnectAndExit())
+            {
+                e.Cancel = true;
             }
         }
 
@@ -1706,6 +1716,15 @@ namespace HyperView
                     "Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
+            }
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Use the shared confirmation function
+            if (ConfirmDisconnectAndExit())
+            {
+                this.Close();
             }
         }
     }

@@ -486,19 +486,7 @@ namespace HyperView.Class
 
                 var results = executePowerShellCommand(command);
 
-                if (results == null)
-                {
-                    string error = "Failed to add VM to group. Check logs for details.";
-                    FileLogger.Message($"Failed to add VM '{vmName}' to group '{groupName}': {error}",
-                        FileLogger.EventType.Error, 2118);
-
-                    return new VMGroupMemberResult
-                    {
-                        Success = false,
-                        Error = error
-                    };
-                }
-
+                // Add-VMGroupMember doesn't return output, so if we get here without exception, it succeeded
                 FileLogger.Message($"Successfully added VM '{vmName}' to group '{groupName}'",
                     FileLogger.EventType.Information, 2119);
 
@@ -539,19 +527,7 @@ namespace HyperView.Class
 
                 var results = executePowerShellCommand(command);
 
-                if (results == null)
-                {
-                    string error = "Failed to remove VM from group. Check logs for details.";
-                    FileLogger.Message($"Failed to remove VM '{vmName}' from group '{groupName}': {error}",
-                        FileLogger.EventType.Error, 2122);
-
-                    return new VMGroupMemberResult
-                    {
-                        Success = false,
-                        Error = error
-                    };
-                }
-
+                // Remove-VMGroupMember doesn't return output, so if we get here without exception, it succeeded
                 FileLogger.Message($"Successfully removed VM '{vmName}' from group '{groupName}'",
                     FileLogger.EventType.Information, 2123);
 

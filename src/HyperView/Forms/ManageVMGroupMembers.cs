@@ -125,6 +125,9 @@ namespace HyperView.Forms
                     if (result.Success)
                     {
                         successCount++;
+                        // Optimistic UI update - add immediately
+                        listboxAvailable.Items.Remove(vmName);
+                        listboxMembers.Items.Add(vmName);
                     }
                     else
                     {
@@ -136,7 +139,17 @@ namespace HyperView.Forms
 
                 this.Cursor = Cursors.Default;
 
-                UpdateMemberLists();
+                // Refresh after a short delay to confirm (Hyper-V caching issue)
+                Task.Delay(500).ContinueWith(_ =>
+                {
+                    if (!this.IsDisposed)
+                    {
+                        this.Invoke(new Action(() =>
+                        {
+                            UpdateMemberLists();
+                        }));
+                    }
+                });
 
                 if (successCount > 0)
                 {
@@ -213,6 +226,13 @@ namespace HyperView.Forms
                     if (result.Success)
                     {
                         successCount++;
+                        // Optimistic UI update - remove immediately
+                        listboxMembers.Items.Remove(vmName);
+                        // Add back to available list
+                        if (AllVMs != null && AllVMs.Contains(vmName))
+                        {
+                            listboxAvailable.Items.Add(vmName);
+                        }
                     }
                     else
                     {
@@ -224,7 +244,17 @@ namespace HyperView.Forms
 
                 this.Cursor = Cursors.Default;
 
-                UpdateMemberLists();
+                // Refresh after a short delay to confirm (Hyper-V caching issue)
+                Task.Delay(500).ContinueWith(_ =>
+                {
+                    if (!this.IsDisposed)
+                    {
+                        this.Invoke(new Action(() =>
+                        {
+                            UpdateMemberLists();
+                        }));
+                    }
+                });
 
                 if (successCount > 0)
                 {

@@ -77,6 +77,7 @@
             buttonOK.TabIndex = 4;
             buttonOK.Text = "Rename";
             buttonOK.UseVisualStyleBackColor = true;
+            buttonOK.Click += ButtonOK_Click;
             // 
             // buttonCancel
             // 
@@ -86,6 +87,7 @@
             buttonCancel.TabIndex = 5;
             buttonCancel.Text = "Cancel";
             buttonCancel.UseVisualStyleBackColor = true;
+            buttonCancel.Click += ButtonCancel_Click;
             // 
             // RenameVMGroupForm
             // 
@@ -104,6 +106,7 @@
             Name = "RenameVMGroupForm";
             StartPosition = FormStartPosition.CenterParent;
             Text = "RenameVMGroupForm";
+            Load += RenameVMGroupForm_Load;
             ResumeLayout(false);
             PerformLayout();
         }
