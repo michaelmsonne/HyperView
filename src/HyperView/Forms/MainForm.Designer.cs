@@ -36,6 +36,15 @@
             buttonLoadVMsrefresh = new Button();
             labelOverviewHelpText = new Label();
             tabpageVMGroups = new TabPage();
+            groupBox2 = new GroupBox();
+            buttonManageServerMembers = new Button();
+            groupBox1 = new GroupBox();
+            buttonRenameSelectedVMGrou = new Button();
+            buttonDeleteSelectedVMGrou = new Button();
+            buttonCreateANewVMGroup = new Button();
+            buttonLoadGroupsrefresh = new Button();
+            labelThisViewProvidesOver = new Label();
+            datagridviewVMGroups = new DataGridView();
             tabpageManageNetwork = new TabPage();
             tabpagehvHosts = new TabPage();
             tabpagehvClusters = new TabPage();
@@ -52,6 +61,7 @@
             tabpageHealthOverview = new TabPage();
             menuStripTopMainForm = new MenuStrip();
             menuToolStripMenuItem = new ToolStripMenuItem();
+            disconnectToolStripMenuItem = new ToolStripMenuItem();
             onlineToolStripMenuItem = new ToolStripMenuItem();
             myWebpageToolStripMenuItem = new ToolStripMenuItem();
             myBlogToolStripMenuItem = new ToolStripMenuItem();
@@ -69,10 +79,14 @@
             toolStripStatusLabelMainForm = new ToolStripStatusLabel();
             toolStripStatusLabelTextMainForm = new ToolStripStatusLabel();
             groupBoxMainFormServerDetails = new GroupBox();
-            disconnectToolStripMenuItem = new ToolStripMenuItem();
+            toolstripstatuslabelMain_CreatedBy = new Label();
             ((System.ComponentModel.ISupportInitialize)datagridviewVMOverView).BeginInit();
             tabcontrolMainForm.SuspendLayout();
             tabpagehvOverview.SuspendLayout();
+            tabpageVMGroups.SuspendLayout();
+            groupBox2.SuspendLayout();
+            groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)datagridviewVMGroups).BeginInit();
             menuStripTopMainForm.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureboxSupportMe).BeginInit();
             statusStripMainForm.SuspendLayout();
@@ -157,6 +171,11 @@
             // 
             // tabpageVMGroups
             // 
+            tabpageVMGroups.Controls.Add(groupBox2);
+            tabpageVMGroups.Controls.Add(groupBox1);
+            tabpageVMGroups.Controls.Add(buttonLoadGroupsrefresh);
+            tabpageVMGroups.Controls.Add(labelThisViewProvidesOver);
+            tabpageVMGroups.Controls.Add(datagridviewVMGroups);
             tabpageVMGroups.Location = new Point(4, 24);
             tabpageVMGroups.Name = "tabpageVMGroups";
             tabpageVMGroups.Padding = new Padding(3);
@@ -164,6 +183,90 @@
             tabpageVMGroups.TabIndex = 1;
             tabpageVMGroups.Text = "Manage VM Groups";
             tabpageVMGroups.UseVisualStyleBackColor = true;
+            // 
+            // groupBox2
+            // 
+            groupBox2.Controls.Add(buttonManageServerMembers);
+            groupBox2.Location = new Point(1407, 211);
+            groupBox2.Name = "groupBox2";
+            groupBox2.Size = new Size(200, 73);
+            groupBox2.TabIndex = 5;
+            groupBox2.TabStop = false;
+            groupBox2.Text = "Manage VM Group";
+            // 
+            // buttonManageServerMembers
+            // 
+            buttonManageServerMembers.Location = new Point(6, 22);
+            buttonManageServerMembers.Name = "buttonManageServerMembers";
+            buttonManageServerMembers.Size = new Size(188, 43);
+            buttonManageServerMembers.TabIndex = 2;
+            buttonManageServerMembers.Text = "Manage server members";
+            buttonManageServerMembers.UseVisualStyleBackColor = true;
+            // 
+            // groupBox1
+            // 
+            groupBox1.Controls.Add(buttonRenameSelectedVMGrou);
+            groupBox1.Controls.Add(buttonDeleteSelectedVMGrou);
+            groupBox1.Controls.Add(buttonCreateANewVMGroup);
+            groupBox1.Location = new Point(1407, 35);
+            groupBox1.Name = "groupBox1";
+            groupBox1.Size = new Size(200, 170);
+            groupBox1.TabIndex = 4;
+            groupBox1.TabStop = false;
+            groupBox1.Text = "Group management";
+            // 
+            // buttonRenameSelectedVMGrou
+            // 
+            buttonRenameSelectedVMGrou.Location = new Point(6, 120);
+            buttonRenameSelectedVMGrou.Name = "buttonRenameSelectedVMGrou";
+            buttonRenameSelectedVMGrou.Size = new Size(188, 43);
+            buttonRenameSelectedVMGrou.TabIndex = 2;
+            buttonRenameSelectedVMGrou.Text = "Rename selected VM group";
+            buttonRenameSelectedVMGrou.UseVisualStyleBackColor = true;
+            // 
+            // buttonDeleteSelectedVMGrou
+            // 
+            buttonDeleteSelectedVMGrou.Location = new Point(6, 71);
+            buttonDeleteSelectedVMGrou.Name = "buttonDeleteSelectedVMGrou";
+            buttonDeleteSelectedVMGrou.Size = new Size(188, 43);
+            buttonDeleteSelectedVMGrou.TabIndex = 1;
+            buttonDeleteSelectedVMGrou.Text = "Delete selected VM group";
+            buttonDeleteSelectedVMGrou.UseVisualStyleBackColor = true;
+            // 
+            // buttonCreateANewVMGroup
+            // 
+            buttonCreateANewVMGroup.Location = new Point(6, 22);
+            buttonCreateANewVMGroup.Name = "buttonCreateANewVMGroup";
+            buttonCreateANewVMGroup.Size = new Size(188, 43);
+            buttonCreateANewVMGroup.TabIndex = 0;
+            buttonCreateANewVMGroup.Text = "Create a new VM Group";
+            buttonCreateANewVMGroup.UseVisualStyleBackColor = true;
+            // 
+            // buttonLoadGroupsrefresh
+            // 
+            buttonLoadGroupsrefresh.Location = new Point(1475, 6);
+            buttonLoadGroupsrefresh.Name = "buttonLoadGroupsrefresh";
+            buttonLoadGroupsrefresh.Size = new Size(132, 23);
+            buttonLoadGroupsrefresh.TabIndex = 3;
+            buttonLoadGroupsrefresh.Text = "&Load Groups/refresh";
+            buttonLoadGroupsrefresh.UseVisualStyleBackColor = true;
+            // 
+            // labelThisViewProvidesOver
+            // 
+            labelThisViewProvidesOver.AutoSize = true;
+            labelThisViewProvidesOver.Location = new Point(6, 3);
+            labelThisViewProvidesOver.Name = "labelThisViewProvidesOver";
+            labelThisViewProvidesOver.Size = new Size(712, 30);
+            labelThisViewProvidesOver.TabIndex = 2;
+            labelThisViewProvidesOver.Text = "This view provides overview and core functionality within the Hyper-V space for management of VM Groups for VMs that extends that\r\nfunctionality over multiple servers.";
+            // 
+            // datagridviewVMGroups
+            // 
+            datagridviewVMGroups.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            datagridviewVMGroups.Location = new Point(6, 35);
+            datagridviewVMGroups.Name = "datagridviewVMGroups";
+            datagridviewVMGroups.Size = new Size(1395, 803);
+            datagridviewVMGroups.TabIndex = 0;
             // 
             // tabpageManageNetwork
             // 
@@ -307,6 +410,13 @@
             menuToolStripMenuItem.Size = new Size(50, 20);
             menuToolStripMenuItem.Text = "Menu";
             // 
+            // disconnectToolStripMenuItem
+            // 
+            disconnectToolStripMenuItem.Name = "disconnectToolStripMenuItem";
+            disconnectToolStripMenuItem.Size = new Size(273, 22);
+            disconnectToolStripMenuItem.Text = "Disconnect";
+            disconnectToolStripMenuItem.Click += disconnectToolStripMenuItem_Click;
+            // 
             // onlineToolStripMenuItem
             // 
             onlineToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { myWebpageToolStripMenuItem, myBlogToolStripMenuItem, guideToolStripMenuItem });
@@ -405,8 +515,9 @@
             // 
             // toolStripStatusLabelMainForm
             // 
+            toolStripStatusLabelMainForm.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             toolStripStatusLabelMainForm.Name = "toolStripStatusLabelMainForm";
-            toolStripStatusLabelMainForm.Size = new Size(42, 17);
+            toolStripStatusLabelMainForm.Size = new Size(45, 17);
             toolStripStatusLabelMainForm.Text = "Status:";
             // 
             // toolStripStatusLabelTextMainForm
@@ -425,18 +536,23 @@
             groupBoxMainFormServerDetails.TabStop = false;
             groupBoxMainFormServerDetails.Text = "Details";
             // 
-            // disconnectToolStripMenuItem
+            // toolstripstatuslabelMain_CreatedBy
             // 
-            disconnectToolStripMenuItem.Name = "disconnectToolStripMenuItem";
-            disconnectToolStripMenuItem.Size = new Size(273, 22);
-            disconnectToolStripMenuItem.Text = "Disconnect";
-            disconnectToolStripMenuItem.Click += disconnectToolStripMenuItem_Click;
+            toolstripstatuslabelMain_CreatedBy.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            toolstripstatuslabelMain_CreatedBy.AutoSize = true;
+            toolstripstatuslabelMain_CreatedBy.BackColor = Color.White;
+            toolstripstatuslabelMain_CreatedBy.Location = new Point(1327, 4);
+            toolstripstatuslabelMain_CreatedBy.Name = "toolstripstatuslabelMain_CreatedBy";
+            toolstripstatuslabelMain_CreatedBy.Size = new Size(190, 15);
+            toolstripstatuslabelMain_CreatedBy.TabIndex = 4;
+            toolstripstatuslabelMain_CreatedBy.Text = "Created by: Michael Morten Sonne";
             // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1645, 999);
+            Controls.Add(toolstripstatuslabelMain_CreatedBy);
             Controls.Add(groupBoxMainFormServerDetails);
             Controls.Add(statusStripMainForm);
             Controls.Add(pictureboxSupportMe);
@@ -452,6 +568,11 @@
             tabcontrolMainForm.ResumeLayout(false);
             tabpagehvOverview.ResumeLayout(false);
             tabpagehvOverview.PerformLayout();
+            tabpageVMGroups.ResumeLayout(false);
+            tabpageVMGroups.PerformLayout();
+            groupBox2.ResumeLayout(false);
+            groupBox1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)datagridviewVMGroups).EndInit();
             menuStripTopMainForm.ResumeLayout(false);
             menuStripTopMainForm.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureboxSupportMe).EndInit();
@@ -504,5 +625,15 @@
         private Button buttonSummaryhvOverviewView;
         private Button buttonLoadVMsrefresh;
         private ToolStripMenuItem disconnectToolStripMenuItem;
+        private Label labelThisViewProvidesOver;
+        private DataGridView datagridviewVMGroups;
+        private GroupBox groupBox1;
+        private Button buttonRenameSelectedVMGrou;
+        private Button buttonDeleteSelectedVMGrou;
+        private Button buttonCreateANewVMGroup;
+        private Button buttonLoadGroupsrefresh;
+        private GroupBox groupBox2;
+        private Button buttonManageServerMembers;
+        private Label toolstripstatuslabelMain_CreatedBy;
     }
 }
