@@ -24,8 +24,8 @@
 
         internal class ToolStings
         {
-            internal static string URLAzurePortalTrustedSigning = @"https://portal.azure.com/#browse/Microsoft.CodeSigning%2Fcodesigningaccounts";
-            internal static string URLMicrosoftLearnTrustedSigning = @"https://learn.microsoft.com/en-us/azure/trusted-signing/overview";
+            internal static string URLMyBlog = @"https://blog.sonnes.cloud";
+            internal static string URLMyWebPage = @"https://sonnes.cloud";
         }
 
         internal class ToolProperties

@@ -435,20 +435,23 @@
             // myWebpageToolStripMenuItem
             // 
             myWebpageToolStripMenuItem.Name = "myWebpageToolStripMenuItem";
-            myWebpageToolStripMenuItem.Size = new Size(142, 22);
+            myWebpageToolStripMenuItem.Size = new Size(180, 22);
             myWebpageToolStripMenuItem.Text = "My webpage";
+            myWebpageToolStripMenuItem.Click += myWebpageToolStripMenuItem_Click;
             // 
             // myBlogToolStripMenuItem
             // 
             myBlogToolStripMenuItem.Name = "myBlogToolStripMenuItem";
-            myBlogToolStripMenuItem.Size = new Size(142, 22);
+            myBlogToolStripMenuItem.Size = new Size(180, 22);
             myBlogToolStripMenuItem.Text = "My blog";
+            myBlogToolStripMenuItem.Click += myBlogToolStripMenuItem_Click;
             // 
             // guideToolStripMenuItem
             // 
             guideToolStripMenuItem.Name = "guideToolStripMenuItem";
-            guideToolStripMenuItem.Size = new Size(142, 22);
+            guideToolStripMenuItem.Size = new Size(180, 22);
             guideToolStripMenuItem.Text = "Guide";
+            guideToolStripMenuItem.Click += guideToolStripMenuItem_Click;
             // 
             // logsToolStripMenuItem
             // 
@@ -460,14 +463,16 @@
             // openLogFolderToolStripMenuItem
             // 
             openLogFolderToolStripMenuItem.Name = "openLogFolderToolStripMenuItem";
-            openLogFolderToolStripMenuItem.Size = new Size(174, 22);
+            openLogFolderToolStripMenuItem.Size = new Size(180, 22);
             openLogFolderToolStripMenuItem.Text = "Open log folder";
+            openLogFolderToolStripMenuItem.Click += openLogFolderToolStripMenuItem_Click;
             // 
             // openLogForTodayToolStripMenuItem
             // 
             openLogForTodayToolStripMenuItem.Name = "openLogForTodayToolStripMenuItem";
-            openLogForTodayToolStripMenuItem.Size = new Size(174, 22);
+            openLogForTodayToolStripMenuItem.Size = new Size(180, 22);
             openLogForTodayToolStripMenuItem.Text = "Open log for today";
+            openLogForTodayToolStripMenuItem.Click += openLogForTodayToolStripMenuItem_Click;
             // 
             // downloadLastestReleaseFromGitHubToolStripMenuItem
             // 
@@ -480,6 +485,7 @@
             changelogToolStripMenuItem.Name = "changelogToolStripMenuItem";
             changelogToolStripMenuItem.Size = new Size(273, 22);
             changelogToolStripMenuItem.Text = "Changelog";
+            changelogToolStripMenuItem.Click += changelogToolStripMenuItem_Click;
             // 
             // exportDataToolStripMenuItem
             // 
@@ -500,6 +506,7 @@
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
             aboutToolStripMenuItem.Size = new Size(273, 22);
             aboutToolStripMenuItem.Text = "About";
+            aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
             // exitToolStripMenuItem
             // 

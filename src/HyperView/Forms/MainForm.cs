@@ -1,7 +1,10 @@
+using HyperView.Class;
+using HyperView.Forms;
 using System.Data;
+using System.Diagnostics;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
-using HyperView.Class;
+using static HyperView.Class.FileLogger;
 
 namespace HyperView
 {
@@ -1725,6 +1728,100 @@ namespace HyperView
             if (ConfirmDisconnectAndExit())
             {
                 this.Close();
+            }
+        }
+
+        private void myWebpageToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Process.Start(Globals.ToolStings.URLMyWebPage);
+
+                // Log the opening of the URL message
+                Message("User clicked the 'My webpage' link to open the URL: '" + Globals.ToolStings.URLMyWebPage + "'", EventType.Information, 1052);
+            }
+            catch (Exception ex)
+            {
+                // Show an error message if the URL could not be opened
+                MessageBox.Show(@"Failed to open the URL '" + Globals.ToolStings.URLMyWebPage + "'. Error: " + ex.Message, @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                // Log the error message
+                Message("Failed to open the URL: " + ex.Message, EventType.Error, 1041);
+            }
+        }
+
+        private void myBlogToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Process.Start(Globals.ToolStings.URLMyBlog);
+
+                // Log the opening of the URL message
+                Message("User clicked the 'My webpage' link to open the URL: '" + Globals.ToolStings.URLMyBlog + "'", EventType.Information, 1052);
+            }
+            catch (Exception ex)
+            {
+                // Show an error message if the URL could not be opened
+                MessageBox.Show(@"Failed to open the URL '" + Globals.ToolStings.URLMyBlog + "'. Error: " + ex.Message, @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                // Log the error message
+                Message("Failed to open the URL: " + ex.Message, EventType.Error, 1041);
+            }
+        }
+
+        private void guideToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void changelogToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Log the user's action to open the Changelog form
+            Message("User clicked the 'Changelog' menu item to open the Changelog form", EventType.Information, 1057);
+
+            // Open the Changelog form
+            ChangelogForm f2 = new ChangelogForm();
+            f2.ShowDialog();
+        }
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Log the user's action to open the About form
+            Message("User clicked the 'About' menu item to open the About form", EventType.Information, 1056);
+
+            // Open the About form
+            AboutForm f2 = new AboutForm();
+            f2.ShowDialog();
+        }
+
+        private void openLogForTodayToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Open the log file for today
+            try
+            {
+                var logFilePath = FileManager.LogFilePath;
+                logFilePath = logFilePath + "\\" + Globals.ToolName.HyperView + " Log " + DateTime.Today.ToString("dd-MM-yyyy") + "." + "log";
+                Process.Start(logFilePath);
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine(exception);
+                throw;
+            }
+        }
+
+        private void openLogFolderToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Open the log folder
+            try
+            {
+                var logFolderPath = FileManager.LogFilePath;
+                Process.Start("explorer.exe", logFolderPath);
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine(exception);
+                throw;
             }
         }
     }
