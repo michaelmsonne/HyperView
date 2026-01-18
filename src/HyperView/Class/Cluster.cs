@@ -422,181 +422,174 @@ namespace HyperView.Class
                     CurrentNode = SessionContext.ServerName
                 };
 
-                // Get detailed cluster information using a comprehensive PowerShell script
-                string detailedInfoScript = @"
-                    $result = @{
-                        Nodes = @()
-                        Networks = @()
-                        SharedStorage = @()
-                        VirtualMachines = @()
-                    }
-
-                    try {
-                        # Get cluster nodes
-                        $nodes = Get-ClusterNode -ErrorAction Stop
-                        foreach ($node in $nodes) {
-                            $result.Nodes += @{
-                                Name = $node.Name
-                                State = $node.State.ToString()
-                                Id = $node.Id.ToString()
-                                NodeWeight = $node.NodeWeight
-                                DynamicWeight = $node.DynamicWeight
-                                FaultDomain = $node.FaultDomain
-                                DrainStatus = $node.DrainStatus.ToString()
-                            }
-                        }
-                    }
-                    catch {
-                        # Nodes retrieval failed
-                    }
-
-                    try {
-                        # Get cluster networks
-                        $networks = Get-ClusterNetwork -ErrorAction Stop
-                        foreach ($network in $networks) {
-                            $result.Networks += @{
-                                Name = $network.Name
-                                Address = $network.Address
-                                AddressMask = $network.AddressMask
-                                Role = $network.Role.ToString()
-                                State = $network.State.ToString()
-                            }
-                        }
-                    }
-                    catch {
-                        # Networks retrieval failed
-                    }
-
-                    try {
-                        # Get cluster shared volumes
-                        $csvs = Get-ClusterSharedVolume -ErrorAction SilentlyContinue
-                        if ($csvs) {
-                            foreach ($csv in $csvs) {
-                                $result.SharedStorage += @{
-                                    Name = $csv.Name
-                                    OwnerNode = $csv.OwnerNode.ToString()
-                                    State = $csv.State.ToString()
-                                    SharedVolumeInfo = if ($csv.SharedVolumeInfo) { $csv.SharedVolumeInfo.ToString() } else { '' }
-                                }
-                            }
-                        }
-                    }
-                    catch {
-                        # CSV retrieval failed
-                    }
-
-                    try {
-                        # Get clustered VMs
-                        $groups = Get-ClusterGroup | Where-Object { $_.GroupType -eq 'VirtualMachine' }
-                        foreach ($group in $groups) {
-                            $preferredOwners = ''
-                            if ($group.PreferredOwners) {
-                                $preferredOwners = ($group.PreferredOwners -join ', ')
-                            }
-
-                            $result.VirtualMachines += @{
-                                Name = $group.Name
-                                OwnerNode = $group.OwnerNode.ToString()
-                                State = $group.State.ToString()
-                                Priority = $group.Priority
-                                PreferredOwners = $preferredOwners
-                            }
-                        }
-                    }
-                    catch {
-                        # VM groups retrieval failed
-                    }
-
-                    return $result
-                ";
-
-                var detailedResult = executePowerShellCommand(detailedInfoScript);
-
-                if (detailedResult != null && detailedResult.Count > 0)
+                // Get cluster nodes
+                try
                 {
-                    var result = (PSObject)detailedResult[0];
-                    var hashtable = (System.Collections.Hashtable)result.BaseObject;
+                    string nodesScript = @"
+                        Get-ClusterNode -ErrorAction Stop | ForEach-Object {
+                            [PSCustomObject]@{
+                                Name = $_.Name
+                                State = $_.State.ToString()
+                                Id = $_.Id.ToString()
+                                NodeWeight = $_.NodeWeight
+                                DynamicWeight = $_.DynamicWeight
+                                FaultDomain = $_.FaultDomain
+                                DrainStatus = $_.DrainStatus.ToString()
+                            }
+                        }
+                    ";
 
-                    // Parse nodes
-                    var nodesArray = hashtable["Nodes"];
-                    if (nodesArray is System.Collections.ArrayList nodesList)
+                    var nodesResult = executePowerShellCommand(nodesScript);
+                    if (nodesResult != null && nodesResult.Count > 0)
                     {
-                        foreach (System.Collections.Hashtable nodeHash in nodesList)
+                        foreach (var node in nodesResult)
                         {
                             clusterDetails.Nodes.Add(new ClusterNodeInfo
                             {
-                                Name = nodeHash["Name"]?.ToString(),
-                                State = nodeHash["State"]?.ToString(),
-                                Id = nodeHash["Id"]?.ToString(),
-                                NodeWeight = Convert.ToInt32(nodeHash["NodeWeight"] ?? 0),
-                                DynamicWeight = Convert.ToInt32(nodeHash["DynamicWeight"] ?? 0),
-                                FaultDomain = nodeHash["FaultDomain"]?.ToString(),
-                                DrainStatus = nodeHash["DrainStatus"]?.ToString()
+                                Name = GetPSObjectProperty(node, "Name"),
+                                State = GetPSObjectProperty(node, "State"),
+                                Id = GetPSObjectProperty(node, "Id"),
+                                NodeWeight = GetPSObjectPropertyInt(node, "NodeWeight"),
+                                DynamicWeight = GetPSObjectPropertyInt(node, "DynamicWeight"),
+                                FaultDomain = GetPSObjectProperty(node, "FaultDomain"),
+                                DrainStatus = GetPSObjectProperty(node, "DrainStatus")
                             });
                         }
-
                         FileLogger.Message($"Retrieved information for {clusterDetails.Nodes.Count} cluster node(s)",
                             FileLogger.EventType.Information, 3023);
                     }
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.Message($"Failed to get cluster nodes: {ex.Message}",
+                        FileLogger.EventType.Warning, 3040);
+                }
 
-                    // Parse networks
-                    var networksArray = hashtable["Networks"];
-                    if (networksArray is System.Collections.ArrayList networksList)
+                // Get cluster networks
+                try
+                {
+                    string networksScript = @"
+                        Get-ClusterNetwork -ErrorAction Stop | ForEach-Object {
+                            [PSCustomObject]@{
+                                Name = $_.Name
+                                Address = $_.Address
+                                AddressMask = $_.AddressMask
+                                Role = $_.Role.ToString()
+                                State = $_.State.ToString()
+                            }
+                        }
+                    ";
+
+                    var networksResult = executePowerShellCommand(networksScript);
+                    if (networksResult != null && networksResult.Count > 0)
                     {
-                        foreach (System.Collections.Hashtable networkHash in networksList)
+                        foreach (var network in networksResult)
                         {
                             clusterDetails.Networks.Add(new ClusterNetworkInfo
                             {
-                                Name = networkHash["Name"]?.ToString(),
-                                Address = networkHash["Address"]?.ToString(),
-                                AddressMask = networkHash["AddressMask"]?.ToString(),
-                                Role = networkHash["Role"]?.ToString(),
-                                State = networkHash["State"]?.ToString()
+                                Name = GetPSObjectProperty(network, "Name"),
+                                Address = GetPSObjectProperty(network, "Address"),
+                                AddressMask = GetPSObjectProperty(network, "AddressMask"),
+                                Role = GetPSObjectProperty(network, "Role"),
+                                State = GetPSObjectProperty(network, "State")
                             });
                         }
-
                         FileLogger.Message($"Retrieved information for {clusterDetails.Networks.Count} cluster network(s)",
                             FileLogger.EventType.Information, 3024);
                     }
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.Message($"Failed to get cluster networks: {ex.Message}",
+                        FileLogger.EventType.Warning, 3041);
+                }
 
-                    // Parse shared storage
-                    var storageArray = hashtable["SharedStorage"];
-                    if (storageArray is System.Collections.ArrayList storageList)
-                    {
-                        foreach (System.Collections.Hashtable storageHash in storageList)
-                        {
-                            clusterDetails.SharedStorage.Add(new ClusterStorageInfo
-                            {
-                                Name = storageHash["Name"]?.ToString(),
-                                OwnerNode = storageHash["OwnerNode"]?.ToString(),
-                                State = storageHash["State"]?.ToString(),
-                                SharedVolumeInfo = storageHash["SharedVolumeInfo"]?.ToString()
-                            });
+                // Get cluster shared volumes
+                try
+                {
+                    string storageScript = @"
+                        $csvs = Get-ClusterSharedVolume -ErrorAction SilentlyContinue
+                        if ($csvs) {
+                            $csvs | ForEach-Object {
+                                [PSCustomObject]@{
+                                    Name = $_.Name
+                                    OwnerNode = $_.OwnerNode.ToString()
+                                    State = $_.State.ToString()
+                                    SharedVolumeInfo = if ($_.SharedVolumeInfo) { $_.SharedVolumeInfo.ToString() } else { '' }
+                                }
+                            }
                         }
+                    ";
 
+                    var storageResult = executePowerShellCommand(storageScript);
+                    if (storageResult != null && storageResult.Count > 0)
+                    {
+                        foreach (var storage in storageResult)
+                        {
+                            // Skip if it's not a valid result (could be null or empty from the if statement)
+                            var name = GetPSObjectProperty(storage, "Name");
+                            if (!string.IsNullOrEmpty(name))
+                            {
+                                clusterDetails.SharedStorage.Add(new ClusterStorageInfo
+                                {
+                                    Name = name,
+                                    OwnerNode = GetPSObjectProperty(storage, "OwnerNode"),
+                                    State = GetPSObjectProperty(storage, "State"),
+                                    SharedVolumeInfo = GetPSObjectProperty(storage, "SharedVolumeInfo")
+                                });
+                            }
+                        }
                         FileLogger.Message($"Retrieved information for {clusterDetails.SharedStorage.Count} cluster shared volume(s)",
                             FileLogger.EventType.Information, 3025);
                     }
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.Message($"Failed to get cluster shared volumes: {ex.Message}",
+                        FileLogger.EventType.Warning, 3042);
+                }
 
-                    // Parse VMs
-                    var vmsArray = hashtable["VirtualMachines"];
-                    if (vmsArray is System.Collections.ArrayList vmsList)
+                // Get clustered VMs
+                try
+                {
+                    string vmsScript = @"
+                        Get-ClusterGroup -ErrorAction Stop | Where-Object { $_.GroupType -eq 'VirtualMachine' } | ForEach-Object {
+                            $preferredOwners = ''
+                            if ($_.PreferredOwners) {
+                                $preferredOwners = ($_.PreferredOwners -join ', ')
+                            }
+                            [PSCustomObject]@{
+                                Name = $_.Name
+                                OwnerNode = $_.OwnerNode.ToString()
+                                State = $_.State.ToString()
+                                Priority = $_.Priority
+                                PreferredOwners = $preferredOwners
+                            }
+                        }
+                    ";
+
+                    var vmsResult = executePowerShellCommand(vmsScript);
+                    if (vmsResult != null && vmsResult.Count > 0)
                     {
-                        foreach (System.Collections.Hashtable vmHash in vmsList)
+                        foreach (var vm in vmsResult)
                         {
                             clusterDetails.VirtualMachines.Add(new ClusterGroupInfo
                             {
-                                Name = vmHash["Name"]?.ToString(),
-                                OwnerNode = vmHash["OwnerNode"]?.ToString(),
-                                State = vmHash["State"]?.ToString(),
-                                Priority = Convert.ToInt32(vmHash["Priority"] ?? 0),
-                                PreferredOwners = vmHash["PreferredOwners"]?.ToString()
+                                Name = GetPSObjectProperty(vm, "Name"),
+                                OwnerNode = GetPSObjectProperty(vm, "OwnerNode"),
+                                State = GetPSObjectProperty(vm, "State"),
+                                Priority = GetPSObjectPropertyInt(vm, "Priority"),
+                                PreferredOwners = GetPSObjectProperty(vm, "PreferredOwners")
                             });
                         }
-
                         FileLogger.Message($"Retrieved information for {clusterDetails.VirtualMachines.Count} clustered VM(s)",
                             FileLogger.EventType.Information, 3026);
                     }
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.Message($"Failed to get clustered VMs: {ex.Message}",
+                        FileLogger.EventType.Warning, 3043);
                 }
 
                 FileLogger.Message("Cluster information retrieval completed",
@@ -609,6 +602,52 @@ namespace HyperView.Class
                 FileLogger.Message($"Error getting cluster information: {ex.Message}",
                     FileLogger.EventType.Error, 3028);
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Helper method to safely get a string property from a PSObject (handles remote deserialization)
+        /// </summary>
+        private static string GetPSObjectProperty(PSObject psObject, string propertyName)
+        {
+            try
+            {
+                if (psObject == null) return string.Empty;
+
+                var prop = psObject.Properties[propertyName];
+                if (prop?.Value != null)
+                {
+                    return prop.Value.ToString();
+                }
+
+                return string.Empty;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Helper method to safely get an int property from a PSObject (handles remote deserialization)
+        /// </summary>
+        private static int GetPSObjectPropertyInt(PSObject psObject, string propertyName)
+        {
+            try
+            {
+                if (psObject == null) return 0;
+
+                var prop = psObject.Properties[propertyName];
+                if (prop?.Value != null)
+                {
+                    return Convert.ToInt32(prop.Value);
+                }
+
+                return 0;
+            }
+            catch
+            {
+                return 0;
             }
         }
     }

@@ -111,9 +111,9 @@
             // 
             // buttonCancel
             // 
-            buttonCancel.Location = new Point(98, 176);
+            buttonCancel.Location = new Point(100, 176);
             buttonCancel.Name = "buttonCancel";
-            buttonCancel.Size = new Size(75, 23);
+            buttonCancel.Size = new Size(94, 23);
             buttonCancel.TabIndex = 8;
             buttonCancel.Text = "Cancel";
             buttonCancel.UseVisualStyleBackColor = true;
@@ -121,9 +121,9 @@
             // 
             // ButtonLogin
             // 
-            ButtonLogin.Location = new Point(236, 176);
+            ButtonLogin.Location = new Point(219, 176);
             ButtonLogin.Name = "ButtonLogin";
-            ButtonLogin.Size = new Size(75, 23);
+            ButtonLogin.Size = new Size(94, 23);
             ButtonLogin.TabIndex = 7;
             ButtonLogin.Text = "Login";
             ButtonLogin.UseVisualStyleBackColor = true;
