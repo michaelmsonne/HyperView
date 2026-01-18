@@ -160,6 +160,7 @@
             buttonLoadVMsrefresh.TabIndex = 2;
             buttonLoadVMsrefresh.Text = "&Load VMs/refresh";
             buttonLoadVMsrefresh.UseVisualStyleBackColor = true;
+            buttonLoadVMsrefresh.Click += buttonLoadVMsrefresh_Click;
             // 
             // labelOverviewHelpText
             // 
@@ -463,14 +464,14 @@
             // openLogFolderToolStripMenuItem
             // 
             openLogFolderToolStripMenuItem.Name = "openLogFolderToolStripMenuItem";
-            openLogFolderToolStripMenuItem.Size = new Size(180, 22);
+            openLogFolderToolStripMenuItem.Size = new Size(174, 22);
             openLogFolderToolStripMenuItem.Text = "Open log folder";
             openLogFolderToolStripMenuItem.Click += openLogFolderToolStripMenuItem_Click;
             // 
             // openLogForTodayToolStripMenuItem
             // 
             openLogForTodayToolStripMenuItem.Name = "openLogForTodayToolStripMenuItem";
-            openLogForTodayToolStripMenuItem.Size = new Size(180, 22);
+            openLogForTodayToolStripMenuItem.Size = new Size(174, 22);
             openLogForTodayToolStripMenuItem.Text = "Open log for today";
             openLogForTodayToolStripMenuItem.Click += openLogForTodayToolStripMenuItem_Click;
             // 

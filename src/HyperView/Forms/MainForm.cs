@@ -70,8 +70,8 @@ namespace HyperView
                         if (sessionResult != null && sessionResult.Count > 0)
                         {
                             _psSession = sessionResult[0];
-                            FileLogger.Message($"Remote PowerShell session created for '{SessionContext.ServerName}'",
-                                FileLogger.EventType.Information, 2002);
+                            Message($"Remote PowerShell session created for '{SessionContext.ServerName}'",
+                                EventType.Information, 2002);
                         }
                     }
                 }
@@ -81,8 +81,8 @@ namespace HyperView
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Failed to initialize session: {ex.Message}",
-                    FileLogger.EventType.Error, 2003);
+                Message($"Failed to initialize session: {ex.Message}",
+                    EventType.Error, 2003);
                 MessageBox.Show($"Failed to initialize session: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 this.DialogResult = DialogResult.Cancel;
@@ -97,8 +97,8 @@ namespace HyperView
             // Only perform cleanup if the form is actually closing (not cancelled by user)
             if (e.Cancel)
             {
-                FileLogger.Message("Form closing cancelled - skipping cleanup",
-                    FileLogger.EventType.Information, 2014);
+                Message("Form closing cancelled - skipping cleanup",
+                    EventType.Information, 2014);
                 return;
             }
 
@@ -114,13 +114,13 @@ namespace HyperView
                           .AddParameter("Session", _psSession);
                         ps.Invoke();
                     }
-                    FileLogger.Message("Remote PowerShell session closed",
-                        FileLogger.EventType.Information, 2004);
+                    Message("Remote PowerShell session closed",
+                        EventType.Information, 2004);
                 }
                 catch (Exception ex)
                 {
-                    FileLogger.Message($"Error closing PS session: {ex.Message}",
-                        FileLogger.EventType.Warning, 2005);
+                    Message($"Error closing PS session: {ex.Message}",
+                        EventType.Warning, 2005);
                 }
             }
 
@@ -131,13 +131,13 @@ namespace HyperView
                 {
                     _persistentRunspace.Close();
                     _persistentRunspace.Dispose();
-                    FileLogger.Message("Persistent runspace closed",
-                        FileLogger.EventType.Information, 2009);
+                    Message("Persistent runspace closed",
+                        EventType.Information, 2009);
                 }
                 catch (Exception ex)
                 {
-                    FileLogger.Message($"Error closing persistent runspace: {ex.Message}",
-                        FileLogger.EventType.Warning, 2010);
+                    Message($"Error closing persistent runspace: {ex.Message}",
+                        EventType.Warning, 2010);
                 }
             }
         }
@@ -231,70 +231,11 @@ namespace HyperView
 
                     row["Heartbeat"] = vm.Properties["Heartbeat"]?.Value?.ToString() ?? "";
 
-                    // Get integration services from VMIntegrationService property
-                    var integrationServices = vm.Properties["VMIntegrationService"]?.Value;
-                    if (integrationServices != null)
+                    // Get integration services
+                    if (!string.IsNullOrEmpty(vmName))
                     {
-                        var allServicesList = new List<string>();
-                        
-                        // VMIntegrationService is a collection of service objects
-                        if (integrationServices is System.Collections.IEnumerable enumerable)
-                        {
-                            foreach (var service in enumerable)
-                            {
-                                if (service != null)
-                                {
-                                    // Try to get as PSObject
-                                    if (service is PSObject psService)
-                                    {
-                                        // Try to get Name property
-                                        var name = psService.Properties["Name"]?.Value?.ToString();
-                                        if (!string.IsNullOrEmpty(name))
-                                        {
-                                            // Shorten some service names for display
-                                            string displayName = name
-                                                .Replace("Guest Service Interface", "Guest Svc")
-                                                .Replace("Key-Value Pair Exchange", "KVP")
-                                                .Replace("Time Synchronization", "Time Sync");
-                                            
-                                            allServicesList.Add(displayName);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        // If not PSObject, try ToString()
-                                        var serviceName = service.ToString();
-                                        if (!string.IsNullOrEmpty(serviceName) && serviceName != "System.Management.Automation.PSObject")
-                                        {
-                                            allServicesList.Add(serviceName);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Format the output - show count and service names
-                        if (allServicesList.Count > 0)
-                        {
-                            string displayText = $"{allServicesList.Count} services";
-                            
-                            // Show first 3 services
-                            var servicesToShow = allServicesList.Take(3).ToList();
-                            displayText += $" ({string.Join(", ", servicesToShow)}";
-                            
-                            if (allServicesList.Count > 3)
-                            {
-                                displayText += $", +{allServicesList.Count - 3}";
-                            }
-                            
-                            displayText += ")";
-                            
-                            row["Integration Services"] = displayText;
-                        }
-                        else
-                        {
-                            row["Integration Services"] = "No services found";
-                        }
+                        var integrationServicesInfo = GetVMIntegrationServices(vmName);
+                        row["Integration Services"] = integrationServicesInfo;
                     }
                     else
                     {
@@ -359,8 +300,8 @@ namespace HyperView
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Error loading VM overview: {ex.Message}",
-                    FileLogger.EventType.Error, 2006);
+                Message($"Error loading VM overview: {ex.Message}",
+                    EventType.Error, 2006);
                 MessageBox.Show($"Error loading VM overview: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -388,8 +329,8 @@ namespace HyperView
                             {
                                 var errors = string.Join(Environment.NewLine,
                                     ps.Streams.Error.Select(e => e.ToString()));
-                                FileLogger.Message($"PowerShell command '{command}' errors: {errors}",
-                                    FileLogger.EventType.Error, 2007);
+                                Message($"PowerShell command '{command}' errors: {errors}",
+                                    EventType.Error, 2007);
                                 return null;
                             }
 
@@ -402,8 +343,8 @@ namespace HyperView
                     // Remote execution - use persistent runspace with the session
                     if (_persistentRunspace == null || _persistentRunspace.RunspaceStateInfo.State != RunspaceState.Opened)
                     {
-                        FileLogger.Message("Persistent runspace is not available or not opened",
-                            FileLogger.EventType.Error, 2011);
+                        Message("Persistent runspace is not available or not opened",
+                            EventType.Error, 2011);
                         return null;
                     }
 
@@ -422,8 +363,8 @@ namespace HyperView
                         {
                             var errors = string.Join(Environment.NewLine,
                                 ps.Streams.Error.Select(e => e.ToString()));
-                            FileLogger.Message($"PowerShell command '{command}' errors: {errors}",
-                                FileLogger.EventType.Error, 2007);
+                            Message($"PowerShell command '{command}' errors: {errors}",
+                                EventType.Error, 2007);
                             return null;
                         }
 
@@ -433,8 +374,8 @@ namespace HyperView
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Error executing PowerShell command '{command}': {ex.Message}",
-                    FileLogger.EventType.Error, 2008);
+                Message($"Error executing PowerShell command '{command}': {ex.Message}",
+                    EventType.Error, 2008);
                 return null;
             }
         }
@@ -474,7 +415,7 @@ namespace HyperView
                                 totalGB += size / (1024.0 * 1024.0 * 1024.0);
                             }
                         }
-                        else if (System.IO.File.Exists(path))
+                        else if (File.Exists(path))
                         {
                             var fileInfo = new System.IO.FileInfo(path);
                             totalGB += fileInfo.Length / (1024.0 * 1024.0 * 1024.0);
@@ -532,6 +473,96 @@ namespace HyperView
             catch
             {
                 return 0;
+            }
+        }
+
+        private string GetVMIntegrationServices(string vmName)
+        {
+            try
+            {
+                var results = ExecutePowerShellCommand($"Get-VMIntegrationService -VMName '{vmName}'");
+
+                if (results == null || results.Count == 0)
+                    return "No services";
+
+                var enabledServicesList = new List<string>();
+                int totalServices = 0;
+
+                foreach (var service in results)
+                {
+                    totalServices++;
+
+                    var nameObj = service.Properties["Name"]?.Value;
+                    var enabledObj = service.Properties["Enabled"]?.Value;
+
+                    string name = nameObj?.ToString();
+
+                    // More robust boolean checking - handle both bool and string "True"/"False"
+                    bool isEnabled = false;
+                    if (enabledObj != null)
+                    {
+                        if (enabledObj is bool boolValue)
+                        {
+                            isEnabled = boolValue;
+                        }
+                        else if (enabledObj is string stringValue)
+                        {
+                            isEnabled = stringValue.Equals("True", StringComparison.OrdinalIgnoreCase);
+                        }
+                        else
+                        {
+                            // Try to parse as bool
+                            bool.TryParse(enabledObj.ToString(), out isEnabled);
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(name) && isEnabled)
+                    {
+                        // Shorten service names for display
+                        string displayName = name
+                            .Replace("Guest Service Interface", "Guest Svc")
+                            .Replace("Key-Value Pair Exchange", "KVP")
+                            .Replace("Time Synchronization", "Time Sync");
+
+                        enabledServicesList.Add(displayName);
+                    }
+                }
+
+                // Format output: show count and enabled service names
+                if (totalServices > 0)
+                {
+                    string displayText = $"{enabledServicesList.Count}/{totalServices} enabled";
+
+                    if (enabledServicesList.Count > 0)
+                    {
+                        // Show first 3 enabled services
+                        var servicesToShow = enabledServicesList.Take(3).ToList();
+                        displayText += $" ({string.Join(", ", servicesToShow)}";
+
+                        if (enabledServicesList.Count > 3)
+                        {
+                            displayText += $", +{enabledServicesList.Count - 3}";
+                        }
+
+                        displayText += ")";
+                    }
+                    else
+                    {
+                        displayText += " (All disabled)";
+                    }
+
+                    return displayText;
+                }
+                else
+                {
+                    return "No services";
+                }
+            }
+            catch (Exception ex)
+            {
+                Message($"Error getting VM integration services for '{vmName}': {ex.Message}",
+                    EventType.Warning, 2150);
+                return "N/A";
             }
         }
 
@@ -609,8 +640,8 @@ namespace HyperView
             // Check if there's an active Hyper-V connection
             if (SessionContext.IsSessionActive())
             {
-                FileLogger.Message("User is attempting to close the application with active connection",
-                    FileLogger.EventType.Information, 2012);
+                Message("User is attempting to close the application with active connection",
+                    EventType.Information, 2012);
 
                 // Show confirmation dialog
                 var confirmResult = MessageBox.Show(
@@ -621,8 +652,8 @@ namespace HyperView
 
                 if (confirmResult == DialogResult.Yes)
                 {
-                    FileLogger.Message($"User confirmed exit - disconnecting from Hyper-V server '{SessionContext.ServerName}'...",
-                        FileLogger.EventType.Information, 2013);
+                    Message($"User confirmed exit - disconnecting from Hyper-V server '{SessionContext.ServerName}'...",
+                        EventType.Information, 2013);
 
                     // Cleanup will be handled by OnFormClosing
                     return true;
@@ -630,16 +661,16 @@ namespace HyperView
                 else
                 {
                     // User cancelled
-                    FileLogger.Message("User cancelled exit - keeping application open",
-                        FileLogger.EventType.Information, 2015);
+                    Message("User cancelled exit - keeping application open",
+                        EventType.Information, 2015);
                     return false;
                 }
             }
             else
             {
                 // No active connection - allow close
-                FileLogger.Message("No active connection - proceeding with exit",
-                    FileLogger.EventType.Information, 2016);
+                Message("No active connection - proceeding with exit",
+                    EventType.Information, 2016);
                 return true;
             }
         }
@@ -657,8 +688,8 @@ namespace HyperView
         {
             try
             {
-                FileLogger.Message($"User initiated disconnect from '{SessionContext.ServerName}'",
-                    FileLogger.EventType.Information, 2017);
+                Message($"User initiated disconnect from '{SessionContext.ServerName}'",
+                    EventType.Information, 2017);
 
                 // Check if there's an active connection
                 if (!SessionContext.IsSessionActive())
@@ -677,8 +708,8 @@ namespace HyperView
 
                 if (confirmResult == DialogResult.Yes)
                 {
-                    FileLogger.Message($"User confirmed disconnect from Hyper-V server '{SessionContext.ServerName}'",
-                        FileLogger.EventType.Information, 2018);
+                    Message($"User confirmed disconnect from Hyper-V server '{SessionContext.ServerName}'",
+                        EventType.Information, 2018);
 
                     // Disable disconnect menu item during operation to prevent double-clicks
                     disconnectToolStripMenuItem.Enabled = false;
@@ -698,13 +729,13 @@ namespace HyperView
                                   .AddParameter("Session", _psSession);
                                 ps.Invoke();
                             }
-                            FileLogger.Message("Remote PowerShell session closed during disconnect",
-                                FileLogger.EventType.Information, 2019);
+                            Message("Remote PowerShell session closed during disconnect",
+                                EventType.Information, 2019);
                         }
                         catch (Exception ex)
                         {
-                            FileLogger.Message($"Error closing PS session during disconnect: {ex.Message}",
-                                FileLogger.EventType.Warning, 2020);
+                            Message($"Error closing PS session during disconnect: {ex.Message}",
+                                EventType.Warning, 2020);
                         }
                     }
 
@@ -716,13 +747,13 @@ namespace HyperView
                             _persistentRunspace.Close();
                             _persistentRunspace.Dispose();
                             _persistentRunspace = null;
-                            FileLogger.Message("Persistent runspace closed during disconnect",
-                                FileLogger.EventType.Information, 2021);
+                            Message("Persistent runspace closed during disconnect",
+                                EventType.Information, 2021);
                         }
                         catch (Exception ex)
                         {
-                            FileLogger.Message($"Error closing persistent runspace during disconnect: {ex.Message}",
-                                FileLogger.EventType.Warning, 2022);
+                            Message($"Error closing persistent runspace during disconnect: {ex.Message}",
+                                EventType.Warning, 2022);
                         }
                     }
 
@@ -732,14 +763,14 @@ namespace HyperView
                     // Clear global connection data (SessionContext)
                     SessionContext.Clear();
 
-                    FileLogger.Message($"Successfully disconnected from Hyper-V server '{disconnectedServer}'",
-                        FileLogger.EventType.Information, 2023);
+                    Message($"Successfully disconnected from Hyper-V server '{disconnectedServer}'",
+                        EventType.Information, 2023);
 
                     // Hide main form temporarily
                     this.Hide();
 
-                    FileLogger.Message("Showing login form for reconnection...",
-                        FileLogger.EventType.Information, 2024);
+                    Message("Showing login form for reconnection...",
+                        EventType.Information, 2024);
 
                     // Show login form for reconnection
                     using (Forms.LoginForm loginForm = new Forms.LoginForm())
@@ -749,8 +780,8 @@ namespace HyperView
                         if (loginResult == DialogResult.OK && loginForm.Result != null && loginForm.Result.Success)
                         {
                             // Authentication successful - close current form and open new MainForm
-                            FileLogger.Message($"Reconnected successfully to '{loginForm.Result.ServerName}'",
-                                FileLogger.EventType.Information, 2025);
+                            Message($"Reconnected successfully to '{loginForm.Result.ServerName}'",
+                                EventType.Information, 2025);
 
                             // Close current MainForm (will trigger cleanup)
                             this.DialogResult = DialogResult.OK;
@@ -761,8 +792,8 @@ namespace HyperView
                         else
                         {
                             // Authentication failed or cancelled - close application
-                            FileLogger.Message("Authentication cancelled after disconnect - closing application",
-                                FileLogger.EventType.Information, 2026);
+                            Message("Authentication cancelled after disconnect - closing application",
+                                EventType.Information, 2026);
 
                             this.DialogResult = DialogResult.Cancel;
                             this.Close();
@@ -772,14 +803,14 @@ namespace HyperView
                 else
                 {
                     // User cancelled disconnect
-                    FileLogger.Message("User cancelled disconnect operation",
-                        FileLogger.EventType.Information, 2027);
+                    Message("User cancelled disconnect operation",
+                        EventType.Information, 2027);
                 }
             }
             catch (Exception ex)
             {
                 string errorMsg = $"Error during disconnect: {ex.Message}";
-                FileLogger.Message(errorMsg, FileLogger.EventType.Error, 2028);
+                Message(errorMsg, EventType.Error, 2028);
 
                 // Re-enable disconnect menu item so user can try again
                 disconnectToolStripMenuItem.Enabled = true;
@@ -799,8 +830,8 @@ namespace HyperView
         {
             try
             {
-                FileLogger.Message("User initiated VM Group creation",
-                    FileLogger.EventType.Information, 2029);
+                Message("User initiated VM Group creation",
+                    EventType.Information, 2029);
 
                 // Check if there's an active Hyper-V connection
                 if (!SessionContext.IsSessionActive())
@@ -822,16 +853,16 @@ namespace HyperView
                         string groupName = createGroupForm.Result.GroupName;
                         string groupType = createGroupForm.Result.GroupType;
 
-                        FileLogger.Message($"Creating VM Group '{groupName}' of type '{groupType}'...",
-                            FileLogger.EventType.Information, 2030);
+                        Message($"Creating VM Group '{groupName}' of type '{groupType}'...",
+                            EventType.Information, 2030);
 
                         // Create the VM Group using PowerShell
                         var createResult = VMGroups.CreateHyperVVMGroup(groupName, groupType, cmd => ExecutePowerShellCommand(cmd));
 
                         if (createResult.Success)
                         {
-                            FileLogger.Message($"VM Group '{groupName}' created successfully",
-                                FileLogger.EventType.Information, 2031);
+                            Message($"VM Group '{groupName}' created successfully",
+                                EventType.Information, 2031);
 
                             MessageBox.Show($"VM Group '{groupName}' created successfully.",
                                 "Group Created",
@@ -846,8 +877,8 @@ namespace HyperView
                         }
                         else
                         {
-                            FileLogger.Message($"Failed to create VM Group '{groupName}': {createResult.Error}",
-                                FileLogger.EventType.Error, 2032);
+                            Message($"Failed to create VM Group '{groupName}': {createResult.Error}",
+                                EventType.Error, 2032);
 
                             MessageBox.Show($"Failed to create VM Group:\n\n{createResult.Error}",
                                 "Error",
@@ -857,15 +888,15 @@ namespace HyperView
                     }
                     else
                     {
-                        FileLogger.Message("VM Group creation cancelled",
-                            FileLogger.EventType.Information, 2033);
+                        Message("VM Group creation cancelled",
+                            EventType.Information, 2033);
                     }
                 }
             }
             catch (Exception ex)
             {
                 string errorMsg = $"Error creating VM Group: {ex.Message}";
-                FileLogger.Message(errorMsg, FileLogger.EventType.Error, 2034);
+                Message(errorMsg, EventType.Error, 2034);
 
                 MessageBox.Show(errorMsg,
                     "Error",
@@ -878,8 +909,8 @@ namespace HyperView
         {
             try
             {
-                FileLogger.Message("User initiated VM Group deletion",
-                    FileLogger.EventType.Information, 2039);
+                Message("User initiated VM Group deletion",
+                    EventType.Information, 2039);
 
                 // Check if there's an active Hyper-V connection
                 if (!SessionContext.IsSessionActive())
@@ -912,8 +943,8 @@ namespace HyperView
                     return;
                 }
 
-                FileLogger.Message($"User selected VM Group '{selectedGroupName}' for deletion",
-                    FileLogger.EventType.Information, 2040);
+                Message($"User selected VM Group '{selectedGroupName}' for deletion",
+                    EventType.Information, 2040);
 
                 // First confirmation
                 var confirmResult = MessageBox.Show(
@@ -924,8 +955,8 @@ namespace HyperView
 
                 if (confirmResult != DialogResult.Yes)
                 {
-                    FileLogger.Message("VM Group deletion cancelled by user",
-                        FileLogger.EventType.Information, 2041);
+                    Message("VM Group deletion cancelled by user",
+                        EventType.Information, 2041);
                     return;
                 }
 
@@ -934,8 +965,8 @@ namespace HyperView
 
                 if (result.Success)
                 {
-                    FileLogger.Message($"VM Group '{selectedGroupName}' deleted successfully",
-                        FileLogger.EventType.Information, 2042);
+                    Message($"VM Group '{selectedGroupName}' deleted successfully",
+                        EventType.Information, 2042);
 
                     MessageBox.Show($"VM Group '{selectedGroupName}' deleted successfully.",
                         "Success",
@@ -953,8 +984,8 @@ namespace HyperView
                     // Check if it's because the group contains VMs and can be forced
                     if (result.CanForce)
                     {
-                        FileLogger.Message($"VM Group '{selectedGroupName}' contains {result.VMCount} VM(s), asking for force deletion",
-                            FileLogger.EventType.Information, 2043);
+                        Message($"VM Group '{selectedGroupName}' contains {result.VMCount} VM(s), asking for force deletion",
+                            EventType.Information, 2043);
 
                         string vmList = string.Join("\n• ", result.VMNames);
                         string forceMessage = $"VM Group '{selectedGroupName}' contains {result.VMCount} VM(s):\n\n• {vmList}\n\n" +
@@ -968,16 +999,16 @@ namespace HyperView
 
                         if (forceResult == DialogResult.Yes)
                         {
-                            FileLogger.Message($"User confirmed force deletion of VM Group '{selectedGroupName}'",
-                                FileLogger.EventType.Information, 2044);
+                            Message($"User confirmed force deletion of VM Group '{selectedGroupName}'",
+                                EventType.Information, 2044);
 
                             // Try again with force
                             var forceDeleteResult = VMGroups.RemoveHyperVVMGroup(selectedGroupName, true, cmd => ExecutePowerShellCommand(cmd));
 
                             if (forceDeleteResult.Success)
                             {
-                                FileLogger.Message($"VM Group '{selectedGroupName}' force deleted successfully",
-                                    FileLogger.EventType.Information, 2045);
+                                Message($"VM Group '{selectedGroupName}' force deleted successfully",
+                                    EventType.Information, 2045);
 
                                 MessageBox.Show($"VM Group '{selectedGroupName}' force deleted successfully. " +
                                               "The VMs remain but are no longer part of this group.",
@@ -993,8 +1024,8 @@ namespace HyperView
                             }
                             else
                             {
-                                FileLogger.Message($"Failed to force delete VM Group '{selectedGroupName}': {forceDeleteResult.Error}",
-                                    FileLogger.EventType.Error, 2046);
+                                Message($"Failed to force delete VM Group '{selectedGroupName}': {forceDeleteResult.Error}",
+                                    EventType.Error, 2046);
 
                                 MessageBox.Show($"Failed to force delete VM Group:\n\n{forceDeleteResult.Error}",
                                     "Error",
@@ -1004,15 +1035,15 @@ namespace HyperView
                         }
                         else
                         {
-                            FileLogger.Message("User cancelled force deletion",
-                                FileLogger.EventType.Information, 2047);
+                            Message("User cancelled force deletion",
+                                EventType.Information, 2047);
                         }
                     }
                     else
                     {
                         // Other error
-                        FileLogger.Message($"Failed to delete VM Group '{selectedGroupName}': {result.Error}",
-                            FileLogger.EventType.Error, 2048);
+                        Message($"Failed to delete VM Group '{selectedGroupName}': {result.Error}",
+                            EventType.Error, 2048);
 
                         MessageBox.Show($"Failed to delete VM Group:\n\n{result.Error}",
                             "Error",
@@ -1024,7 +1055,7 @@ namespace HyperView
             catch (Exception ex)
             {
                 string errorMsg = $"Error deleting VM Group: {ex.Message}";
-                FileLogger.Message(errorMsg, FileLogger.EventType.Error, 2049);
+                Message(errorMsg, EventType.Error, 2049);
 
                 MessageBox.Show(errorMsg,
                     "Error",
@@ -1037,8 +1068,8 @@ namespace HyperView
         {
             try
             {
-                FileLogger.Message("User initiated VM Group rename",
-                    FileLogger.EventType.Information, 2094);
+                Message("User initiated VM Group rename",
+                    EventType.Information, 2094);
 
                 // Check if there's an active Hyper-V connection
                 if (!SessionContext.IsSessionActive())
@@ -1071,8 +1102,8 @@ namespace HyperView
                     return;
                 }
 
-                FileLogger.Message($"User selected VM Group '{currentGroupName}' for rename",
-                    FileLogger.EventType.Information, 2095);
+                Message($"User selected VM Group '{currentGroupName}' for rename",
+                    EventType.Information, 2095);
 
                 // Show rename form
                 using (Forms.RenameVMGroupForm renameForm = new Forms.RenameVMGroupForm())
@@ -1085,8 +1116,8 @@ namespace HyperView
                     {
                         string newGroupName = renameForm.NewGroupName;
 
-                        FileLogger.Message($"Renaming VM Group from '{currentGroupName}' to '{newGroupName}'...",
-                            FileLogger.EventType.Information, 2096);
+                        Message($"Renaming VM Group from '{currentGroupName}' to '{newGroupName}'...",
+                            EventType.Information, 2096);
 
                         // Rename the VM Group using PowerShell
                         var renameResult = VMGroups.RenameHyperVVMGroup(
@@ -1096,8 +1127,8 @@ namespace HyperView
 
                         if (renameResult.Success)
                         {
-                            FileLogger.Message($"VM Group renamed successfully from '{currentGroupName}' to '{newGroupName}'",
-                                FileLogger.EventType.Information, 2097);
+                            Message($"VM Group renamed successfully from '{currentGroupName}' to '{newGroupName}'",
+                                EventType.Information, 2097);
 
                             MessageBox.Show($"VM Group renamed successfully from '{currentGroupName}' to '{newGroupName}'.",
                                 "Group Renamed",
@@ -1112,8 +1143,8 @@ namespace HyperView
                         }
                         else
                         {
-                            FileLogger.Message($"Failed to rename VM Group '{currentGroupName}': {renameResult.Error}",
-                                FileLogger.EventType.Error, 2098);
+                            Message($"Failed to rename VM Group '{currentGroupName}': {renameResult.Error}",
+                                EventType.Error, 2098);
 
                             MessageBox.Show($"Failed to rename VM Group:\n\n{renameResult.Error}",
                                 "Error",
@@ -1123,15 +1154,15 @@ namespace HyperView
                     }
                     else
                     {
-                        FileLogger.Message("VM Group rename cancelled",
-                            FileLogger.EventType.Information, 2099);
+                        Message("VM Group rename cancelled",
+                            EventType.Information, 2099);
                     }
                 }
             }
             catch (Exception ex)
             {
                 string errorMsg = $"Error renaming VM Group: {ex.Message}";
-                FileLogger.Message(errorMsg, FileLogger.EventType.Error, 2100);
+                Message(errorMsg, EventType.Error, 2100);
 
                 MessageBox.Show(errorMsg,
                     "Error",
@@ -1144,8 +1175,8 @@ namespace HyperView
         {
             try
             {
-                FileLogger.Message("User requested VM Groups refresh",
-                    FileLogger.EventType.Information, 2056);
+                Message("User requested VM Groups refresh",
+                    EventType.Information, 2056);
 
                 // Check if there's an active Hyper-V connection
                 if (!SessionContext.IsSessionActive())
@@ -1160,16 +1191,16 @@ namespace HyperView
                 // Show progress
                 this.Cursor = Cursors.WaitCursor;
 
-                FileLogger.Message("Retrieving VM Groups from server...",
-                    FileLogger.EventType.Information, 2057);
+                Message("Retrieving VM Groups from server...",
+                    EventType.Information, 2057);
 
                 // Get VM Groups
                 var vmGroups = VMGroups.GetHyperVVMGroups(cmd => ExecutePowerShellCommand(cmd));
 
                 if (vmGroups != null)
                 {
-                    FileLogger.Message($"Retrieved {vmGroups.Count} VM Groups, updating DataGridView",
-                        FileLogger.EventType.Information, 2058);
+                    Message($"Retrieved {vmGroups.Count} VM Groups, updating DataGridView",
+                        EventType.Information, 2058);
 
                     // Update DataGridView
                     UpdateVMGroupsDataGridView(vmGroups);
@@ -1181,8 +1212,8 @@ namespace HyperView
                 }
                 else
                 {
-                    FileLogger.Message("No VM Groups retrieved",
-                        FileLogger.EventType.Warning, 2059);
+                    Message("No VM Groups retrieved",
+                        EventType.Warning, 2059);
 
                     MessageBox.Show("No VM Groups found or error retrieving groups.",
                         "Refresh Complete",
@@ -1193,7 +1224,7 @@ namespace HyperView
             catch (Exception ex)
             {
                 string errorMsg = $"Error refreshing VM Groups: {ex.Message}";
-                FileLogger.Message(errorMsg, FileLogger.EventType.Error, 2060);
+                Message(errorMsg, EventType.Error, 2060);
 
                 MessageBox.Show(errorMsg,
                     "Error",
@@ -1212,13 +1243,13 @@ namespace HyperView
             {
                 if (datagridviewVMGroups == null)
                 {
-                    FileLogger.Message("datagridviewVMGroups control not found",
-                        FileLogger.EventType.Warning, 2067);
+                    Message("datagridviewVMGroups control not found",
+                        EventType.Warning, 2067);
                     return;
                 }
 
-                FileLogger.Message($"Updating VM Groups DataGridView with {vmGroups.Count} groups",
-                    FileLogger.EventType.Information, 2068);
+                Message($"Updating VM Groups DataGridView with {vmGroups.Count} groups",
+                    EventType.Information, 2068);
 
                 // Clear existing data
                 datagridviewVMGroups.DataSource = null;
@@ -1227,8 +1258,8 @@ namespace HyperView
 
                 if (vmGroups == null || vmGroups.Count == 0)
                 {
-                    FileLogger.Message("No VM Groups to display",
-                        FileLogger.EventType.Information, 2069);
+                    Message("No VM Groups to display",
+                        EventType.Information, 2069);
                     return;
                 }
 
@@ -1273,13 +1304,13 @@ namespace HyperView
                 datagridviewVMGroups.AllowUserToDeleteRows = false;
                 datagridviewVMGroups.RowHeadersVisible = false;
 
-                FileLogger.Message($"VM Groups DataGridView updated successfully with {vmGroups.Count} groups",
-                    FileLogger.EventType.Information, 2070);
+                Message($"VM Groups DataGridView updated successfully with {vmGroups.Count} groups",
+                    EventType.Information, 2070);
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Error updating VM Groups DataGridView: {ex.Message}",
-                    FileLogger.EventType.Error, 2071);
+                Message($"Error updating VM Groups DataGridView: {ex.Message}",
+                    EventType.Error, 2071);
             }
         }
 
@@ -1287,8 +1318,8 @@ namespace HyperView
         {
             try
             {
-                FileLogger.Message("Refreshing VM Groups DataGridView (silent refresh)",
-                    FileLogger.EventType.Information, 2083);
+                Message("Refreshing VM Groups DataGridView (silent refresh)",
+                    EventType.Information, 2083);
 
                 // Get VM Groups without showing message boxes
                 var vmGroups = VMGroups.GetHyperVVMGroups(cmd => ExecutePowerShellCommand(cmd));
@@ -1299,14 +1330,14 @@ namespace HyperView
                 }
                 else
                 {
-                    FileLogger.Message("No VM Groups retrieved during silent refresh",
-                        FileLogger.EventType.Information, 2084);
+                    Message("No VM Groups retrieved during silent refresh",
+                        EventType.Information, 2084);
                 }
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Error during silent VM Groups refresh: {ex.Message}",
-                    FileLogger.EventType.Error, 2085);
+                Message($"Error during silent VM Groups refresh: {ex.Message}",
+                    EventType.Error, 2085);
             }
         }
 
@@ -1314,8 +1345,8 @@ namespace HyperView
         {
             try
             {
-                FileLogger.Message("User requested VM data export",
-                    FileLogger.EventType.Information, 2101);
+                Message("User requested VM data export",
+                    EventType.Information, 2101);
 
                 // Check if there's an active Hyper-V connection
                 if (!SessionContext.IsSessionActive())
@@ -1337,8 +1368,8 @@ namespace HyperView
                     return;
                 }
 
-                FileLogger.Message($"Export All VM Data requested - {datagridviewVMOverView.Rows.Count} VMs available",
-                    FileLogger.EventType.Information, 2102);
+                Message($"Export All VM Data requested - {datagridviewVMOverView.Rows.Count} VMs available",
+                    EventType.Information, 2102);
 
                 // Show SaveFileDialog with format options
                 using (SaveFileDialog saveFileDialog = new SaveFileDialog())
@@ -1352,10 +1383,10 @@ namespace HyperView
                     if (saveFileDialog.ShowDialog() == DialogResult.OK)
                     {
                         string filePath = saveFileDialog.FileName;
-                        string fileExtension = System.IO.Path.GetExtension(filePath).ToLower();
+                        string fileExtension = Path.GetExtension(filePath).ToLower();
 
-                        FileLogger.Message($"Exporting VM data to: {filePath} (Format: {fileExtension})",
-                            FileLogger.EventType.Information, 2103);
+                        Message($"Exporting VM data to: {filePath} (Format: {fileExtension})",
+                            EventType.Information, 2103);
 
                         // Show progress cursor
                         this.Cursor = Cursors.WaitCursor;
@@ -1392,8 +1423,8 @@ namespace HyperView
 
                             if (success)
                             {
-                                FileLogger.Message($"VM data export completed successfully: {filePath}",
-                                    FileLogger.EventType.Information, 2104);
+                                Message($"VM data export completed successfully: {filePath}",
+                                    EventType.Information, 2104);
 
                                 // Show success message with option to open file location
                                 var result = MessageBox.Show(
@@ -1406,12 +1437,12 @@ namespace HyperView
                                 {
                                     try
                                     {
-                                        System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{filePath}\"");
+                                        Process.Start("explorer.exe", $"/select,\"{filePath}\"");
                                     }
                                     catch (Exception ex)
                                     {
-                                        FileLogger.Message($"Could not open file location: {ex.Message}",
-                                            FileLogger.EventType.Warning, 2105);
+                                        Message($"Could not open file location: {ex.Message}",
+                                            EventType.Warning, 2105);
                                     }
                                 }
                             }
@@ -1423,15 +1454,15 @@ namespace HyperView
                     }
                     else
                     {
-                        FileLogger.Message("Export dialog cancelled by user",
-                            FileLogger.EventType.Information, 2106);
+                        Message("Export dialog cancelled by user",
+                            EventType.Information, 2106);
                     }
                 }
             }
             catch (Exception ex)
             {
                 string errorMsg = $"Error exporting VM data: {ex.Message}";
-                FileLogger.Message(errorMsg, FileLogger.EventType.Error, 2107);
+                Message(errorMsg, EventType.Error, 2107);
 
                 MessageBox.Show(errorMsg,
                     "Export Error",
@@ -1444,8 +1475,8 @@ namespace HyperView
         {
             try
             {
-                FileLogger.Message("Exporting as JSON format",
-                    FileLogger.EventType.Information, 2108);
+                Message("Exporting as JSON format",
+                    EventType.Information, 2108);
 
                 var exportData = new
                 {
@@ -1467,14 +1498,14 @@ namespace HyperView
                     WriteIndented = true
                 });
 
-                System.IO.File.WriteAllText(filePath, jsonData, System.Text.Encoding.UTF8);
+                File.WriteAllText(filePath, jsonData, System.Text.Encoding.UTF8);
 
                 return true;
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Error exporting to JSON: {ex.Message}",
-                    FileLogger.EventType.Error, 2109);
+                Message($"Error exporting to JSON: {ex.Message}",
+                    EventType.Error, 2109);
                 return false;
             }
         }
@@ -1483,8 +1514,8 @@ namespace HyperView
         {
             try
             {
-                FileLogger.Message("Exporting as CSV format",
-                    FileLogger.EventType.Information, 2110);
+                Message("Exporting as CSV format",
+                    EventType.Information, 2110);
 
                 var vmData = GetVMDataFromGrid();
                 var csv = new System.Text.StringBuilder();
@@ -1509,7 +1540,7 @@ namespace HyperView
                     csv.AppendLine(string.Join(",", values));
                 }
 
-                System.IO.File.WriteAllText(filePath, csv.ToString(), System.Text.Encoding.UTF8);
+                File.WriteAllText(filePath, csv.ToString(), System.Text.Encoding.UTF8);
 
                 // Also create a separate CSV for VM Groups if available
                 if (vmGroups != null && vmGroups.Count > 0)
@@ -1524,18 +1555,18 @@ namespace HyperView
                         groupsCsv.AppendLine($"\"{group.Name}\",\"{group.GroupTypeDisplay}\",\"{group.VMCount}\",\"{group.VMList}\",\"{group.ComputerName}\"");
                     }
 
-                    System.IO.File.WriteAllText(groupsCsvPath, groupsCsv.ToString(), System.Text.Encoding.UTF8);
+                    File.WriteAllText(groupsCsvPath, groupsCsv.ToString(), System.Text.Encoding.UTF8);
 
-                    FileLogger.Message($"VM Groups data also exported to: {groupsCsvPath}",
-                        FileLogger.EventType.Information, 2111);
+                    Message($"VM Groups data also exported to: {groupsCsvPath}",
+                        EventType.Information, 2111);
                 }
 
                 return true;
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Error exporting to CSV: {ex.Message}",
-                    FileLogger.EventType.Error, 2112);
+                Message($"Error exporting to CSV: {ex.Message}",
+                    EventType.Error, 2112);
                 return false;
             }
         }
@@ -1544,8 +1575,8 @@ namespace HyperView
         {
             try
             {
-                FileLogger.Message("Exporting as XML format",
-                    FileLogger.EventType.Information, 2113);
+                Message("Exporting as XML format",
+                    EventType.Information, 2113);
 
                 var vmData = GetVMDataFromGrid();
 
@@ -1604,8 +1635,8 @@ namespace HyperView
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Error exporting to XML: {ex.Message}",
-                    FileLogger.EventType.Error, 2114);
+                Message($"Error exporting to XML: {ex.Message}",
+                    EventType.Error, 2114);
                 return false;
             }
         }
@@ -1614,8 +1645,8 @@ namespace HyperView
         {
             try
             {
-                FileLogger.Message("Exporting as formatted text",
-                    FileLogger.EventType.Information, 2115);
+                Message("Exporting as formatted text",
+                    EventType.Information, 2115);
 
                 var vmData = GetVMDataFromGrid();
                 var textOutput = new List<string>();
@@ -1667,14 +1698,14 @@ namespace HyperView
                 textOutput.Add("END OF EXPORT");
                 textOutput.Add(new string('=', 80));
 
-                System.IO.File.WriteAllLines(filePath, textOutput, System.Text.Encoding.UTF8);
+                File.WriteAllLines(filePath, textOutput, System.Text.Encoding.UTF8);
 
                 return true;
             }
             catch (Exception ex)
             {
-                FileLogger.Message($"Error exporting to text: {ex.Message}",
-                    FileLogger.EventType.Error, 2116);
+                Message($"Error exporting to text: {ex.Message}",
+                    EventType.Error, 2116);
                 return false;
             }
         }
@@ -1703,8 +1734,8 @@ namespace HyperView
         {
             try
             {
-                FileLogger.Message("User initiated VM Group member management",
-                    FileLogger.EventType.Information, 2139);
+                Message("User initiated VM Group member management",
+                    EventType.Information, 2139);
 
                 // Check if there's an active Hyper-V connection
                 if (!SessionContext.IsSessionActive())
@@ -1737,8 +1768,8 @@ namespace HyperView
                     return;
                 }
 
-                FileLogger.Message($"User selected VM Group '{groupName}' for member management",
-                    FileLogger.EventType.Information, 2140);
+                Message($"User selected VM Group '{groupName}' for member management",
+                    EventType.Information, 2140);
 
                 // Get list of all available VMs from the overview grid
                 var allVMs = new List<string>();
@@ -1765,8 +1796,8 @@ namespace HyperView
 
                     if (result == DialogResult.OK)
                     {
-                        FileLogger.Message($"Member management completed for group '{groupName}', refreshing view...",
-                            FileLogger.EventType.Information, 2141);
+                        Message($"Member management completed for group '{groupName}', refreshing view...",
+                            EventType.Information, 2141);
 
                         // Refresh the VM Groups view
                         VMGroups.RefreshVMGroupsView(
@@ -1779,7 +1810,7 @@ namespace HyperView
             catch (Exception ex)
             {
                 string errorMsg = $"Error managing VM Group members: {ex.Message}";
-                FileLogger.Message(errorMsg, FileLogger.EventType.Error, 2142);
+                Message(errorMsg, EventType.Error, 2142);
 
                 MessageBox.Show(errorMsg,
                     "Error",
@@ -1907,6 +1938,73 @@ namespace HyperView
 
                 // Log the error message
                 Message("Failed to open the URL: " + ex.Message, EventType.Error, 1041);
+            }
+        }
+
+        private void buttonLoadVMsrefresh_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Message("User requested VM overview refresh",
+                    EventType.Information, 2151);
+
+                // Check if there's an active Hyper-V connection
+                if (!SessionContext.IsSessionActive())
+                {
+                    MessageBox.Show("No active Hyper-V connection. Please connect to a Hyper-V host first.",
+                        "Connection Required",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                // Show progress cursor
+                this.Cursor = Cursors.WaitCursor;
+
+                Message("Starting VM overview refresh...",
+                    EventType.Information, 2152);
+
+                // Reload VM overview data
+                LoadVMOverview();
+
+                // Count running VMs from the grid
+                int totalVMs = datagridviewVMOverView.Rows.Count;
+                int runningVMs = 0;
+                
+                foreach (DataGridViewRow row in datagridviewVMOverView.Rows)
+                {
+                    var state = row.Cells["State"].Value?.ToString();
+                    if (state == "Running")
+                    {
+                        runningVMs++;
+                    }
+                }
+
+                Message($"VM overview refresh completed - Total: {totalVMs}, Running: {runningVMs}",
+                    EventType.Information, 2153);
+
+                // Show success message
+                MessageBox.Show($"VM overview refreshed successfully.\n\nTotal VMs: {totalVMs}\nRunning VMs: {runningVMs}",
+                    "Refresh Complete",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                // Update window title with latest connection info
+                this.Text = $"{Globals.ToolName.HyperView} - Connected to {SessionContext.ServerName} ({SessionContext.ConnectionType}) - {totalVMs} VMs";
+            }
+            catch (Exception ex)
+            {
+                string errorMsg = $"Error refreshing VM overview: {ex.Message}";
+                Message(errorMsg, EventType.Error, 2154);
+
+                MessageBox.Show(errorMsg,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+            finally
+            {
+                this.Cursor = Cursors.Default;
             }
         }
     }
