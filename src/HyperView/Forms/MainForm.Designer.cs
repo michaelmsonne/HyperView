@@ -81,6 +81,7 @@
             toolStripStatusLabelTextMainForm = new ToolStripStatusLabel();
             groupBoxMainFormServerDetails = new GroupBox();
             toolstripstatuslabelMain_CreatedBy = new Label();
+            buttonSummaryClustersOverviewView = new Button();
             ((System.ComponentModel.ISupportInitialize)datagridviewVMOverView).BeginInit();
             tabcontrolMainForm.SuspendLayout();
             tabpagehvOverview.SuspendLayout();
@@ -88,6 +89,7 @@
             groupBox2.SuspendLayout();
             groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)datagridviewVMGroups).BeginInit();
+            tabpagehvClusters.SuspendLayout();
             menuStripTopMainForm.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureboxSupportMe).BeginInit();
             statusStripMainForm.SuspendLayout();
@@ -299,6 +301,7 @@
             // 
             // tabpagehvClusters
             // 
+            tabpagehvClusters.Controls.Add(buttonSummaryClustersOverviewView);
             tabpagehvClusters.Location = new Point(4, 24);
             tabpagehvClusters.Name = "tabpagehvClusters";
             tabpagehvClusters.Size = new Size(1613, 844);
@@ -575,6 +578,17 @@
             toolstripstatuslabelMain_CreatedBy.TabIndex = 4;
             toolstripstatuslabelMain_CreatedBy.Text = "Created by: Michael Morten Sonne";
             // 
+            // buttonSummaryClustersOverviewView
+            // 
+            buttonSummaryClustersOverviewView.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            buttonSummaryClustersOverviewView.Location = new Point(1412, 3);
+            buttonSummaryClustersOverviewView.Name = "buttonSummaryClustersOverviewView";
+            buttonSummaryClustersOverviewView.Size = new Size(75, 23);
+            buttonSummaryClustersOverviewView.TabIndex = 4;
+            buttonSummaryClustersOverviewView.Text = "Summary";
+            buttonSummaryClustersOverviewView.UseVisualStyleBackColor = true;
+            buttonSummaryClustersOverviewView.Click += buttonSummaryClustersOverviewView_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -601,6 +615,7 @@
             groupBox2.ResumeLayout(false);
             groupBox1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)datagridviewVMGroups).EndInit();
+            tabpagehvClusters.ResumeLayout(false);
             menuStripTopMainForm.ResumeLayout(false);
             menuStripTopMainForm.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureboxSupportMe).EndInit();
@@ -664,5 +679,6 @@
         private Button buttonManageServerMembers;
         private Label toolstripstatuslabelMain_CreatedBy;
         private ToolStripMenuItem allVMDataToolStripMenuItem;
+        private Button buttonSummaryClustersOverviewView;
     }
 }

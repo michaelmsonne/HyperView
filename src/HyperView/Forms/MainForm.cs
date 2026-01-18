@@ -1,4 +1,4 @@
-using HyperView.Class;
+﻿using HyperView.Class;
 using HyperView.Forms;
 using System.Data;
 using System.Diagnostics;
@@ -990,8 +990,8 @@ namespace HyperView
                         Message($"VM Group '{selectedGroupName}' contains {result.VMCount} VM(s), asking for force deletion",
                             EventType.Information, 2043);
 
-                        string vmList = string.Join("\n� ", result.VMNames);
-                        string forceMessage = $"VM Group '{selectedGroupName}' contains {result.VMCount} VM(s):\n\n� {vmList}\n\n" +
+                        string vmList = string.Join("\n• ", result.VMNames);
+                        string forceMessage = $"VM Group '{selectedGroupName}' contains {result.VMCount} VM(s):\n\n• {vmList}\n\n" +
                                             "The VMs will remain but will be removed from this group.\n\n" +
                                             "Do you want to force delete the VM Group anyway?";
 
@@ -2105,25 +2105,61 @@ namespace HyperView
                 int groupedVMCount = groupedVMs.Count;
                 int ungroupedVMCount = totalVMs - groupedVMCount;
 
+                // Get cluster information if connected to a cluster
+                string clusterSection = "";
+                if (SessionContext.IsCluster)
+                {
+                    Message("Retrieving cluster information for summary...",
+                        EventType.Information, 2163);
+
+                    var clusterInfo = Cluster.GetClusterInformation(cmd => ExecutePowerShellCommand(cmd));
+
+                    if (clusterInfo != null)
+                    {
+                        clusterSection = $@"
+
+🖥️ Cluster Information:
+• Cluster Name: {clusterInfo.ClusterName}
+• Current Node: {clusterInfo.CurrentNode}
+• Total Nodes: {clusterInfo.Nodes.Count}
+• Clustered VMs: {clusterInfo.VirtualMachines.Count}
+• Cluster Networks: {clusterInfo.Networks.Count}
+• Shared Volumes: {clusterInfo.SharedStorage.Count}";
+
+                        // List all nodes with their states
+                        if (clusterInfo.Nodes.Count > 0)
+                        {
+                            clusterSection += "\n• Cluster Nodes:";
+                            foreach (var node in clusterInfo.Nodes)
+                            {
+                                clusterSection += $"\n  - {node.Name} ({node.State})";
+                            }
+                        }
+
+                        Message($"Cluster information added to summary - {clusterInfo.Nodes.Count} nodes",
+                            EventType.Information, 2164);
+                    }
+                }
+
                 this.Cursor = Cursors.Default;
 
                 // Create summary message
                 string summaryText = $@"VM Overview Summary - {SessionContext.ServerName}:
 
-VM Statistics:
-� Total VMs: {totalVMs}
-� Running: {runningVMs} | Stopped: {stoppedVMs}
-� Generation 1: {gen1VMs} | Generation 2: {gen2VMs}
+📊 VM Statistics:
+• Total VMs: {totalVMs}
+• Running: {runningVMs} | Stopped: {stoppedVMs}
+• Generation 1: {gen1VMs} | Generation 2: {gen2VMs}
 
-Resource Allocation:
-� Total Processors: {totalProcessors}
-� Memory Assigned: {Math.Round(totalMemoryAssignedMB / 1024.0, 1)} GB
-� Total Disk Space: {Math.Round(totalDiskSpaceGB, 1)} GB
+💾 Resource Allocation:
+• Total Processors: {totalProcessors}
+• Memory Assigned: {Math.Round(totalMemoryAssignedMB / 1024.0, 1)} GB
+• Total Disk Space: {Math.Round(totalDiskSpaceGB, 1)} GB
 
-VM Groups:
-� Total Groups: {totalGroups}
-� Grouped VMs: {groupedVMCount}
-� Ungrouped VMs: {ungroupedVMCount}";
+🗂️ VM Groups:
+• Total Groups: {totalGroups}
+• Grouped VMs: {groupedVMCount}
+• Ungrouped VMs: {ungroupedVMCount}{clusterSection}";
 
                 Message($"VM summary generated - Total VMs: {totalVMs}, Running: {runningVMs}",
                     EventType.Information, 2157);
@@ -2164,7 +2200,7 @@ VM Groups:
 
                 // Extract VM data from the row
                 string vmName = selectedRow.Cells["VM Name"].Value?.ToString() ?? "";
-                
+
                 if (string.IsNullOrEmpty(vmName))
                 {
                     MessageBox.Show("Could not retrieve VM name.",
@@ -2181,37 +2217,37 @@ VM Groups:
                 string details = $@"VM Details - {vmName}
 
 Basic Information:
-� Name: {vmName}
-� State: {selectedRow.Cells["State"].Value}
-� Generation: {selectedRow.Cells["Generation"].Value}
-� Created: {selectedRow.Cells["Created"].Value}
-� Is Clustered: {selectedRow.Cells["Is Clustered"].Value}
+• Name: {vmName}
+• State: {selectedRow.Cells["State"].Value}
+• Generation: {selectedRow.Cells["Generation"].Value}
+• Created: {selectedRow.Cells["Created"].Value}
+• Is Clustered: {selectedRow.Cells["Is Clustered"].Value}
 
 Performance & Health:
-� CPU Count: {selectedRow.Cells["CPU Count"].Value}
-� CPU Usage: {selectedRow.Cells["CPU Usage %"].Value}%
-� Memory Assigned: {selectedRow.Cells["Memory Assigned (MB)"].Value} MB
-� Memory Demand: {selectedRow.Cells["Memory Demand (MB)"].Value} MB
-� Memory Startup: {selectedRow.Cells["Memory Startup (MB)"].Value} MB
-� Dynamic Memory: {selectedRow.Cells["Dynamic Memory"].Value}
-� Heartbeat: {selectedRow.Cells["Heartbeat"].Value}
+• CPU Count: {selectedRow.Cells["CPU Count"].Value}
+• CPU Usage: {selectedRow.Cells["CPU Usage %"].Value}%
+• Memory Assigned: {selectedRow.Cells["Memory Assigned (MB)"].Value} MB
+• Memory Demand: {selectedRow.Cells["Memory Demand (MB)"].Value} MB
+• Memory Startup: {selectedRow.Cells["Memory Startup (MB)"].Value} MB
+• Dynamic Memory: {selectedRow.Cells["Dynamic Memory"].Value}
+• Heartbeat: {selectedRow.Cells["Heartbeat"].Value}
 
 Storage & Network:
-� Total Disk Space: {selectedRow.Cells["Total Disk (GB)"].Value} GB
-� Network Adapters: {selectedRow.Cells["Network Adapters"].Value}
+• Total Disk Space: {selectedRow.Cells["Total Disk (GB)"].Value} GB
+• Network Adapters: {selectedRow.Cells["Network Adapters"].Value}
 
 Automation & Backup:
-� Auto Start: {selectedRow.Cells["Auto Start"].Value}
-� Auto Stop: {selectedRow.Cells["Auto Stop"].Value}
-� Checkpoint Type: {selectedRow.Cells["Checkpoint Type"].Value}
-� Checkpoints: {selectedRow.Cells["Checkpoints"].Value}
-� Replication: {selectedRow.Cells["Replication"].Value}
+• Auto Start: {selectedRow.Cells["Auto Start"].Value}
+• Auto Stop: {selectedRow.Cells["Auto Stop"].Value}
+• Checkpoint Type: {selectedRow.Cells["Checkpoint Type"].Value}
+• Checkpoints: {selectedRow.Cells["Checkpoints"].Value}
+• Replication: {selectedRow.Cells["Replication"].Value}
 
 Management:
-� Integration Services: {selectedRow.Cells["Integration Services"].Value}
-� VM Group(s): {selectedRow.Cells["VM Groups"].Value}
-� Categories: {selectedRow.Cells["Categories"].Value}
-� Uptime: {selectedRow.Cells["Uptime"].Value}";
+• Integration Services: {selectedRow.Cells["Integration Services"].Value}
+• VM Group(s): {selectedRow.Cells["VM Groups"].Value}
+• Categories: {selectedRow.Cells["Categories"].Value}
+• Uptime: {selectedRow.Cells["Uptime"].Value}";
 
                 Message($"Displaying VM details dialog for {vmName}",
                     EventType.Information, 2161);
@@ -2232,6 +2268,184 @@ Management:
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
+        }
+
+        /// <summary>
+        /// Shows detailed cluster information dialog
+        /// </summary>
+        private void ShowClusterInformation()
+        {
+            try
+            {
+                Message("User requested cluster information",
+                    EventType.Information, 2165);
+
+                // Check if there's an active Hyper-V connection
+                if (!SessionContext.IsSessionActive())
+                {
+                    MessageBox.Show("No active Hyper-V connection. Please connect to a Hyper-V host first.",
+                        "Connection Required",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                // Check if connected to a cluster
+                if (!SessionContext.IsCluster)
+                {
+                    MessageBox.Show($"The connected host '{SessionContext.ServerName}' is not part of a cluster.\n\n" +
+                                  "This is a standalone Hyper-V host.",
+                        "Not a Cluster",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    return;
+                }
+
+                this.Cursor = Cursors.WaitCursor;
+
+                Message("Retrieving detailed cluster information...",
+                    EventType.Information, 2166);
+
+                // Get cluster information
+                var clusterInfo = Cluster.GetClusterInformation(cmd => ExecutePowerShellCommand(cmd));
+
+                this.Cursor = Cursors.Default;
+
+                if (clusterInfo == null)
+                {
+                    MessageBox.Show("Failed to retrieve cluster information.",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Build detailed cluster information message
+                var details = new System.Text.StringBuilder();
+                details.AppendLine($"Cluster Details - {clusterInfo.ClusterName}");
+                details.AppendLine();
+                details.AppendLine("═══════════════════════════════════════════");
+                details.AppendLine();
+
+                // Basic Information
+                details.AppendLine("🖥️ Cluster Overview:");
+                details.AppendLine($"• Cluster Name: {clusterInfo.ClusterName}");
+                details.AppendLine($"• Current Node: {clusterInfo.CurrentNode}");
+                details.AppendLine($"• Total Nodes: {clusterInfo.Nodes.Count}");
+                details.AppendLine($"• Clustered VMs: {clusterInfo.VirtualMachines.Count}");
+                details.AppendLine();
+
+                // Cluster Nodes
+                if (clusterInfo.Nodes.Count > 0)
+                {
+                    details.AppendLine("📡 Cluster Nodes:");
+                    foreach (var node in clusterInfo.Nodes)
+                    {
+                        details.AppendLine($"• {node.Name}");
+                        details.AppendLine($"  - State: {node.State}");
+                        details.AppendLine($"  - Node Weight: {node.NodeWeight}");
+                        details.AppendLine($"  - Dynamic Weight: {node.DynamicWeight}");
+                        if (!string.IsNullOrEmpty(node.FaultDomain))
+                            details.AppendLine($"  - Fault Domain: {node.FaultDomain}");
+                        details.AppendLine($"  - Drain Status: {node.DrainStatus}");
+                        details.AppendLine();
+                    }
+                }
+
+                // Cluster Networks
+                if (clusterInfo.Networks.Count > 0)
+                {
+                    details.AppendLine("🌐 Cluster Networks:");
+                    foreach (var network in clusterInfo.Networks)
+                    {
+                        details.AppendLine($"• {network.Name}");
+                        details.AppendLine($"  - Address: {network.Address}/{network.AddressMask}");
+                        details.AppendLine($"  - Role: {network.Role}");
+                        details.AppendLine($"  - State: {network.State}");
+                        details.AppendLine();
+                    }
+                }
+                else
+                {
+                    details.AppendLine("🌐 Cluster Networks: None found");
+                    details.AppendLine();
+                }
+
+                // Shared Storage
+                if (clusterInfo.SharedStorage.Count > 0)
+                {
+                    details.AppendLine("💾 Cluster Shared Volumes:");
+                    foreach (var storage in clusterInfo.SharedStorage)
+                    {
+                        details.AppendLine($"• {storage.Name}");
+                        details.AppendLine($"  - Owner Node: {storage.OwnerNode}");
+                        details.AppendLine($"  - State: {storage.State}");
+                        details.AppendLine();
+                    }
+                }
+                else
+                {
+                    details.AppendLine("💾 Cluster Shared Volumes: None found");
+                    details.AppendLine();
+                }
+
+                // Virtual Machines
+                if (clusterInfo.VirtualMachines.Count > 0)
+                {
+                    details.AppendLine("🖥️ Highly Available Virtual Machines:");
+
+                    // Group VMs by owner node
+                    var vmsByNode = clusterInfo.VirtualMachines
+                        .GroupBy(vm => vm.OwnerNode)
+                        .OrderBy(g => g.Key);
+
+                    foreach (var nodeGroup in vmsByNode)
+                    {
+                        details.AppendLine($"• Node: {nodeGroup.Key} ({nodeGroup.Count()} VMs)");
+                        foreach (var vm in nodeGroup.OrderBy(v => v.Name))
+                        {
+                            details.AppendLine($"  - {vm.Name} ({vm.State})");
+                            if (vm.Priority > 0)
+                                details.AppendLine($"    Priority: {vm.Priority}");
+                            if (!string.IsNullOrEmpty(vm.PreferredOwners))
+                                details.AppendLine($"    Preferred Owners: {vm.PreferredOwners}");
+                        }
+                        details.AppendLine();
+                    }
+                }
+                else
+                {
+                    details.AppendLine("🖥️ Highly Available Virtual Machines: None found");
+                    details.AppendLine();
+                }
+
+                Message($"Displaying cluster information for '{clusterInfo.ClusterName}'",
+                    EventType.Information, 2167);
+
+                // Show the detailed information
+                MessageBox.Show(details.ToString(),
+                    $"Cluster Information - {clusterInfo.ClusterName}",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                this.Cursor = Cursors.Default;
+
+                string errorMsg = $"Error displaying cluster information: {ex.Message}";
+                Message(errorMsg, EventType.Error, 2168);
+
+                MessageBox.Show(errorMsg,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private void buttonSummaryClustersOverviewView_Click(object sender, EventArgs e)
+        {
+            // Show detailed cluster information
+            ShowClusterInformation();
         }
     }
 }
