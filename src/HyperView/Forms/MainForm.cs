@@ -146,12 +146,31 @@ namespace HyperView
         {
             try
             {
+                Message($"Loading VM overview from '{SessionContext.ServerName}' (IsCluster: {SessionContext.IsCluster}, IsLocal: {SessionContext.IsLocal})",
+                    EventType.Information, 2170);
+
                 // Clear existing data
                 datagridviewVMOverView.DataSource = null;
                 datagridviewVMOverView.Rows.Clear();
                 datagridviewVMOverView.Columns.Clear();
 
-                var results = ExecutePowerShellCommand("Get-VM");
+                System.Collections.ObjectModel.Collection<PSObject> results;
+                bool isClusterCollection = false;
+
+                // Check if connected to a cluster - use node iteration approach
+                if (SessionContext.IsCluster && !SessionContext.IsLocal)
+                {
+                    Message("Using cluster node iteration to retrieve VMs from all nodes...",
+                        EventType.Information, 2171);
+
+                    results = GetClusterVMs();
+                    isClusterCollection = true;
+                }
+                else
+                {
+                    // Standard VM retrieval for standalone or local
+                    results = ExecutePowerShellCommand("Get-VM");
+                }
 
                 if (results == null || results.Count == 0)
                 {
@@ -159,6 +178,9 @@ namespace HyperView
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
+
+                Message($"Retrieved {results.Count} VMs, processing...",
+                    EventType.Information, 2172);
 
                 // Create DataTable with enhanced columns
                 var dataTable = new DataTable();
@@ -184,12 +206,14 @@ namespace HyperView
                 dataTable.Columns.Add("Replication");
                 dataTable.Columns.Add("Created");
                 dataTable.Columns.Add("Is Clustered");
+                dataTable.Columns.Add("Owner Node");
                 dataTable.Columns.Add("Categories");
 
                 foreach (var vm in results)
                 {
                     var row = dataTable.NewRow();
-                    row["VM Name"] = vm.Properties["Name"]?.Value?.ToString() ?? "";
+                    var vmName = vm.Properties["Name"]?.Value?.ToString() ?? "";
+                    row["VM Name"] = vmName;
                     row["State"] = vm.Properties["State"]?.Value?.ToString() ?? "";
                     row["CPU Count"] = vm.Properties["ProcessorCount"]?.Value?.ToString() ?? "";
                     row["CPU Usage %"] = vm.Properties["CPUUsage"]?.Value?.ToString() ?? "";
@@ -207,45 +231,87 @@ namespace HyperView
                     var dynamicMem = vm.Properties["DynamicMemoryEnabled"]?.Value;
                     row["Dynamic Memory"] = dynamicMem != null && (bool)dynamicMem ? "Yes" : "No";
 
-                    // Get hard drive info
-                    var vmName = vm.Properties["Name"]?.Value?.ToString();
-                    if (!string.IsNullOrEmpty(vmName))
-                    {
-                        var totalDiskGB = GetVMTotalDiskSize(vmName);
-                        row["Total Disk (GB)"] = totalDiskGB > 0 ? totalDiskGB.ToString("F2") : "";
+                    // Check if this VM has pre-collected detailed properties (from cluster collection)
+                    bool hasDetailedProperties = vm.Properties["TotalDiskSizeGB"] != null &&
+                                                  vm.Properties["NetworkAdapterCount"] != null &&
+                                                  vm.Properties["CheckpointCount"] != null;
 
-                        var networkAdapterCount = GetVMNetworkAdapterCount(vmName);
-                        row["Network Adapters"] = networkAdapterCount.ToString();
+                    if (hasDetailedProperties && isClusterCollection)
+                    {
+                        // Use pre-collected data from cluster node collection
+                        var totalDiskGB = vm.Properties["TotalDiskSizeGB"]?.Value;
+                        row["Total Disk (GB)"] = totalDiskGB != null ? Convert.ToDouble(totalDiskGB).ToString("F2") : "";
+
+                        var networkAdapterCount = vm.Properties["NetworkAdapterCount"]?.Value;
+                        row["Network Adapters"] = networkAdapterCount?.ToString() ?? "0";
+
+                        var checkpointCount = vm.Properties["CheckpointCount"]?.Value;
+                        row["Checkpoints"] = checkpointCount?.ToString() ?? "0";
+
+                        // Use pre-collected integration services display
+                        var integrationServicesDisplay = vm.Properties["IntegrationServicesDisplay"]?.Value?.ToString();
+                        row["Integration Services"] = !string.IsNullOrEmpty(integrationServicesDisplay) ? integrationServicesDisplay : "N/A";
                     }
                     else
                     {
-                        row["Total Disk (GB)"] = "";
-                        row["Network Adapters"] = "";
+                        // Standard approach - make additional calls (for standalone/local)
+                        if (!string.IsNullOrEmpty(vmName))
+                        {
+                            var totalDiskGB = GetVMTotalDiskSize(vmName);
+                            row["Total Disk (GB)"] = totalDiskGB > 0 ? totalDiskGB.ToString("F2") : "";
+
+                            var networkAdapterCount = GetVMNetworkAdapterCount(vmName);
+                            row["Network Adapters"] = networkAdapterCount.ToString();
+
+                            var integrationServicesInfo = GetVMIntegrationServices(vmName);
+                            row["Integration Services"] = integrationServicesInfo;
+
+                            var checkpointCount = GetVMCheckpointCount(vmName);
+                            row["Checkpoints"] = checkpointCount.ToString();
+                        }
+                        else
+                        {
+                            row["Total Disk (GB)"] = "";
+                            row["Network Adapters"] = "";
+                            row["Integration Services"] = "N/A";
+                            row["Checkpoints"] = "";
+                        }
                     }
 
                     row["Generation"] = vm.Properties["Generation"]?.Value?.ToString() ?? "";
 
                     // Format uptime
                     var uptime = vm.Properties["Uptime"]?.Value;
-                    row["Uptime"] = uptime != null ? FormatTimeSpan((TimeSpan)uptime) : "";
-
-                    row["Heartbeat"] = vm.Properties["Heartbeat"]?.Value?.ToString() ?? "";
-
-                    // Get integration services
-                    if (!string.IsNullOrEmpty(vmName))
+                    if (uptime != null)
                     {
-                        var integrationServicesInfo = GetVMIntegrationServices(vmName);
-                        row["Integration Services"] = integrationServicesInfo;
+                        if (uptime is TimeSpan ts)
+                        {
+                            row["Uptime"] = FormatTimeSpan(ts);
+                        }
+                        else
+                        {
+                            // Try to parse string representation
+                            if (TimeSpan.TryParse(uptime.ToString(), out TimeSpan parsedTs))
+                            {
+                                row["Uptime"] = FormatTimeSpan(parsedTs);
+                            }
+                            else
+                            {
+                                row["Uptime"] = "";
+                            }
+                        }
                     }
                     else
                     {
-                        row["Integration Services"] = "N/A";
+                        row["Uptime"] = "";
                     }
+
+                    row["Heartbeat"] = vm.Properties["Heartbeat"]?.Value?.ToString() ?? "";
 
                     row["Auto Start"] = vm.Properties["AutomaticStartAction"]?.Value?.ToString() ?? "";
                     row["Auto Stop"] = vm.Properties["AutomaticStopAction"]?.Value?.ToString() ?? "";
 
-                    // Get VM groups
+                    // Get VM groups - always need to query this as it's not node-specific
                     if (!string.IsNullOrEmpty(vmName))
                     {
                         var groups = GetVMGroups(vmName);
@@ -258,17 +324,6 @@ namespace HyperView
 
                     row["Checkpoint Type"] = vm.Properties["CheckpointType"]?.Value?.ToString() ?? "";
 
-                    // Get checkpoint count
-                    if (!string.IsNullOrEmpty(vmName))
-                    {
-                        var checkpointCount = GetVMCheckpointCount(vmName);
-                        row["Checkpoints"] = checkpointCount.ToString();
-                    }
-                    else
-                    {
-                        row["Checkpoints"] = "";
-                    }
-
                     var replicationState = vm.Properties["ReplicationState"]?.Value?.ToString();
                     row["Replication"] = !string.IsNullOrEmpty(replicationState) ? replicationState : "Not Configured";
 
@@ -277,6 +332,10 @@ namespace HyperView
 
                     var isClustered = vm.Properties["IsClustered"]?.Value;
                     row["Is Clustered"] = isClustered != null && (bool)isClustered ? "Yes" : "No";
+
+                    // Owner Node (for cluster VMs)
+                    var ownerNode = vm.Properties["ComputerName"]?.Value?.ToString();
+                    row["Owner Node"] = !string.IsNullOrEmpty(ownerNode) ? ownerNode : SessionContext.ServerName;
 
                     row["Categories"] = "";
 
@@ -297,6 +356,9 @@ namespace HyperView
 
                 // Apply color coding
                 ApplyColorCoding();
+
+                Message($"VM overview loaded successfully with {results.Count} VMs",
+                    EventType.Information, 2173);
             }
             catch (Exception ex)
             {
@@ -304,6 +366,239 @@ namespace HyperView
                     EventType.Error, 2006);
                 MessageBox.Show($"Error loading VM overview: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Gets VMs from all cluster nodes by iterating through each node
+        /// Retrieves detailed VM properties at collection time to avoid cross-node issues
+        /// </summary>
+        private System.Collections.ObjectModel.Collection<PSObject> GetClusterVMs()
+        {
+            var allVMs = new System.Collections.ObjectModel.Collection<PSObject>();
+
+            try
+            {
+                Message("Getting cluster nodes...",
+                    EventType.Information, 2174);
+
+                // First, get the list of cluster nodes
+                string getNodesScript = @"
+                    Get-ClusterNode -ErrorAction Stop | Select-Object -ExpandProperty Name
+                ";
+
+                var nodesResult = ExecutePowerShellCommand(getNodesScript);
+
+                if (nodesResult == null || nodesResult.Count == 0)
+                {
+                    Message("No cluster nodes found, falling back to standard Get-VM",
+                        EventType.Warning, 2175);
+                    return ExecutePowerShellCommand("Get-VM");
+                }
+
+                // Build list of cluster nodes
+                var clusterNodes = new List<string>();
+                foreach (var nodeObj in nodesResult)
+                {
+                    string nodeName = nodeObj.BaseObject?.ToString();
+                    if (!string.IsNullOrEmpty(nodeName))
+                    {
+                        // If the original connection used FQDN, construct FQDNs for cluster nodes
+                        if (SessionContext.ServerName.Contains('.') && !nodeName.Contains('.'))
+                        {
+                            string domain = SessionContext.ServerName.Substring(SessionContext.ServerName.IndexOf('.'));
+                            nodeName = nodeName + domain;
+                        }
+                        clusterNodes.Add(nodeName);
+                    }
+                }
+
+                Message($"Found {clusterNodes.Count} cluster nodes: {string.Join(", ", clusterNodes)}",
+                    EventType.Information, 2176);
+
+                // Now get VMs with full details from each node
+                int nodeIndex = 0;
+                foreach (var node in clusterNodes)
+                {
+                    nodeIndex++;
+                    try
+                    {
+                        Message($"Getting VMs from cluster node {nodeIndex} of {clusterNodes.Count}: {node}",
+                            EventType.Information, 2177);
+
+                        // Get VMs with all detailed properties in one call per node
+                        // This avoids cross-node VM lookup issues
+                        string getDetailedVMsScript = @"
+                            $vmList = Get-VM -ErrorAction SilentlyContinue
+                            foreach ($vm in $vmList) {
+                                # Get all detailed properties on this node where the VM exists
+                                $vmProcessor = Get-VMProcessor -VMName $vm.Name -ErrorAction SilentlyContinue
+                                $vmMemory = Get-VMMemory -VMName $vm.Name -ErrorAction SilentlyContinue
+                                $vmNetworkAdapters = @(Get-VMNetworkAdapter -VMName $vm.Name -ErrorAction SilentlyContinue)
+                                $vmHardDrives = @(Get-VMHardDiskDrive -VMName $vm.Name -ErrorAction SilentlyContinue)
+                                $vmCheckpoints = @(Get-VMSnapshot -VMName $vm.Name -ErrorAction SilentlyContinue)
+                                $vmIntegrationServices = @(Get-VMIntegrationService -VMName $vm.Name -ErrorAction SilentlyContinue)
+
+                                # Calculate total disk size
+                                $totalDiskSizeGB = 0
+                                foreach ($drive in $vmHardDrives) {
+                                    if ($drive.Path -and (Test-Path $drive.Path -ErrorAction SilentlyContinue)) {
+                                        $diskInfo = Get-Item $drive.Path -ErrorAction SilentlyContinue
+                                        if ($diskInfo) {
+                                            $totalDiskSizeGB += [Math]::Round($diskInfo.Length / 1GB, 2)
+                                        }
+                                    }
+                                }
+
+                                # Format integration services
+                                $enabledServices = @()
+                                $totalServiceCount = 0
+                                foreach ($svc in $vmIntegrationServices) {
+                                    $totalServiceCount++
+                                    if ($svc.Enabled) {
+                                        $displayName = $svc.Name -replace 'Guest Service Interface', 'Guest Svc' -replace 'Key-Value Pair Exchange', 'KVP' -replace 'Time Synchronization', 'Time Sync'
+                                        $enabledServices += $displayName
+                                    }
+                                }
+                                $integrationServicesDisplay = if ($totalServiceCount -gt 0) {
+                                    ""$($enabledServices.Count)/$totalServiceCount enabled""
+                                    if ($enabledServices.Count -gt 0) {
+                                        ""$($enabledServices.Count)/$totalServiceCount enabled ($($enabledServices -join ', '))""
+                                    } else {
+                                        ""$($enabledServices.Count)/$totalServiceCount enabled (All disabled)""
+                                    }
+                                } else { 'No services' }
+
+                                # Create custom object with all details
+                                [PSCustomObject]@{
+                                    Name = $vm.Name
+                                    State = $vm.State
+                                    ProcessorCount = if ($vmProcessor) { $vmProcessor.Count } else { 1 }
+                                    CPUUsage = $vm.CPUUsage
+                                    MemoryAssigned = $vm.MemoryAssigned
+                                    MemoryDemand = $vm.MemoryDemand
+                                    MemoryStartup = if ($vmMemory) { $vmMemory.Startup } else { $vm.MemoryStartup }
+                                    DynamicMemoryEnabled = $vm.DynamicMemoryEnabled
+                                    Generation = $vm.Generation
+                                    Uptime = $vm.Uptime
+                                    Heartbeat = $vm.Heartbeat
+                                    IntegrationServicesDisplay = $integrationServicesDisplay
+                                    AutomaticStartAction = $vm.AutomaticStartAction
+                                    AutomaticStopAction = $vm.AutomaticStopAction
+                                    CheckpointType = $vm.CheckpointType
+                                    ReplicationState = $vm.ReplicationState
+                                    CreationTime = $vm.CreationTime
+                                    IsClustered = $vm.IsClustered
+                                    TotalDiskSizeGB = $totalDiskSizeGB
+                                    NetworkAdapterCount = $vmNetworkAdapters.Count
+                                    CheckpointCount = $vmCheckpoints.Count
+                                    ComputerName = $env:COMPUTERNAME
+                                }
+                            }
+                        ";
+
+                        var nodeVMs = ExecutePowerShellCommandOnNode(node, getDetailedVMsScript);
+
+                        if (nodeVMs != null && nodeVMs.Count > 0)
+                        {
+                            foreach (var vm in nodeVMs)
+                            {
+                                allVMs.Add(vm);
+                            }
+                            Message($"Added {nodeVMs.Count} VMs from cluster node: {node}",
+                                EventType.Information, 2178);
+                        }
+                        else
+                        {
+                            Message($"No VMs found on cluster node: {node}",
+                                EventType.Information, 2179);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Message($"Failed to get VMs from cluster node {node}: {ex.Message}",
+                            EventType.Warning, 2180);
+                        // Continue processing other nodes
+                    }
+                }
+
+                Message($"Total VMs collected from all cluster nodes: {allVMs.Count}",
+                    EventType.Information, 2181);
+
+                return allVMs;
+            }
+            catch (Exception ex)
+            {
+                Message($"Error getting cluster VMs: {ex.Message}",
+                    EventType.Error, 2182);
+                
+                // Fall back to standard Get-VM
+                Message("Falling back to standard Get-VM",
+                    EventType.Warning, 2183);
+                return ExecutePowerShellCommand("Get-VM");
+            }
+        }
+
+        /// <summary>
+        /// Executes a PowerShell command directly on a specific cluster node
+        /// </summary>
+        private System.Collections.ObjectModel.Collection<PSObject> ExecutePowerShellCommandOnNode(string nodeName, string command)
+        {
+            try
+            {
+                if (_persistentRunspace == null || _persistentRunspace.RunspaceStateInfo.State != RunspaceState.Opened)
+                {
+                    Message($"Persistent runspace not available for node command execution",
+                        EventType.Error, 2184);
+                    return null;
+                }
+
+                using (PowerShell ps = PowerShell.Create())
+                {
+                    ps.Runspace = _persistentRunspace;
+
+                    // Use Invoke-Command to execute on the specific node
+                    string script = $@"
+                        Invoke-Command -ComputerName '{nodeName}' -ScriptBlock {{
+                            {command}
+                        }} -ErrorAction Stop
+                    ";
+
+                    // Add credentials if available
+                    if (SessionContext.Credentials != null)
+                    {
+                        script = $@"
+                            $cred = $args[0]
+                            Invoke-Command -ComputerName '{nodeName}' -Credential $cred -ScriptBlock {{
+                                {command}
+                            }} -ErrorAction Stop
+                        ";
+                        ps.AddScript(script);
+                        ps.AddArgument(SessionContext.Credentials);
+                    }
+                    else
+                    {
+                        ps.AddScript(script);
+                    }
+
+                    var results = ps.Invoke();
+
+                    if (ps.HadErrors)
+                    {
+                        var errors = string.Join(Environment.NewLine,
+                            ps.Streams.Error.Select(e => e.ToString()));
+                        Message($"PowerShell errors on node '{nodeName}': {errors}",
+                            EventType.Warning, 2185);
+                    }
+
+                    return results;
+                }
+            }
+            catch (Exception ex)
+            {
+                Message($"Error executing command on node '{nodeName}': {ex.Message}",
+                    EventType.Error, 2186);
+                return null;
             }
         }
 
