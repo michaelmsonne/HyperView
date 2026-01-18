@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Text;
-using System.Windows.Forms;
-using HyperView.Class;
+﻿using HyperView.Class;
 
 namespace HyperView.Forms
 {
@@ -64,29 +57,6 @@ namespace HyperView.Forms
             {
                 buttonUseSelectedTemplate.Enabled = false;
             }
-
-            // Set up event handlers
-            WireUpEvents();
-        }
-
-        private void WireUpEvents()
-        {
-            this.Load += CreateVMGroupForm_Load;
-            
-            if (buttonOK != null)
-                buttonOK.Click += ButtonOK_Click;
-            
-            if (buttonCancel != null)
-                buttonCancel.Click += ButtonCancel_Click;
-            
-            if (buttonRecommended != null)
-                buttonRecommended.Click += ButtonRecommended_Click;
-            
-            if (buttonUseSelectedTemplate != null)
-                buttonUseSelectedTemplate.Click += ButtonUseSelectedTemplate_Click;
-            
-            if (treeviewTemplates != null)
-                treeviewTemplates.AfterSelect += TreeviewTemplates_AfterSelect;
         }
 
         private List<VMGroupTemplate> GetRecommendedVMGroups()

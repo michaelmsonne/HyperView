@@ -53,6 +53,7 @@
             buttonOK.TabIndex = 0;
             buttonOK.Text = "Create VM Group";
             buttonOK.UseVisualStyleBackColor = true;
+            buttonOK.Click += ButtonOK_Click;
             // 
             // buttonCancel
             // 
@@ -62,6 +63,7 @@
             buttonCancel.TabIndex = 1;
             buttonCancel.Text = "Cancel";
             buttonCancel.UseVisualStyleBackColor = true;
+            buttonCancel.Click += ButtonCancel_Click;
             // 
             // buttonRecommended
             // 
@@ -71,6 +73,7 @@
             buttonRecommended.TabIndex = 2;
             buttonRecommended.Text = "Templates...";
             buttonRecommended.UseVisualStyleBackColor = true;
+            buttonRecommended.Click += ButtonRecommended_Click;
             // 
             // labelGroupName
             // 
@@ -127,6 +130,7 @@
             buttonUseSelectedTemplate.TabIndex = 4;
             buttonUseSelectedTemplate.Text = "Use selected Template";
             buttonUseSelectedTemplate.UseVisualStyleBackColor = true;
+            buttonUseSelectedTemplate.Click += ButtonUseSelectedTemplate_Click;
             // 
             // textboxDescription
             // 
@@ -161,6 +165,7 @@
             treeviewTemplates.Name = "treeviewTemplates";
             treeviewTemplates.Size = new Size(270, 241);
             treeviewTemplates.TabIndex = 0;
+            treeviewTemplates.AfterSelect += TreeviewTemplates_AfterSelect;
             // 
             // CreateVMGroupForm
             // 
@@ -182,6 +187,7 @@
             Name = "CreateVMGroupForm";
             StartPosition = FormStartPosition.CenterParent;
             Text = "CreateVMGroupForm";
+            Load += CreateVMGroupForm_Load;
             groupboxRecommended.ResumeLayout(false);
             groupboxRecommended.PerformLayout();
             ResumeLayout(false);
