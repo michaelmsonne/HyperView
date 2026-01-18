@@ -132,25 +132,107 @@ namespace HyperView.Class
 
                         // Process VM Members array
                         var vmMembersProperty = result.Properties["VMMembers"]?.Value;
-                        if (vmMembersProperty != null && vmMembersProperty is System.Collections.IEnumerable enumerable)
+                        FileLogger.Message($"VM Members property type for group '{groupInfo.Name}': {vmMembersProperty?.GetType().FullName ?? "null"}",
+                            FileLogger.EventType.Information, 2072);
+                        
+                        if (vmMembersProperty != null)
                         {
-                            foreach (var item in enumerable)
+                            // Unwrap PSObject if needed
+                            object actualValue = vmMembersProperty;
+                            if (vmMembersProperty is PSObject psObj)
                             {
-                                if (item != null)
-                                    groupInfo.VMMembers.Add(item.ToString());
+                                actualValue = psObj.BaseObject;
+                                FileLogger.Message($"Unwrapped PSObject - BaseObject type: {actualValue?.GetType().FullName ?? "null"}",
+                                    FileLogger.EventType.Information, 2080);
+                            }
+                            
+                            // Handle different types that might be returned
+                            if (actualValue is System.Collections.IEnumerable enumerable && !(actualValue is string))
+                            {
+                                foreach (var item in enumerable)
+                                {
+                                    if (item != null)
+                                    {
+                                        // Unwrap PSObject items if needed
+                                        object actualItem = item;
+                                        if (item is PSObject psItem)
+                                        {
+                                            actualItem = psItem.BaseObject;
+                                        }
+                                        
+                                        string vmName = actualItem.ToString();
+                                        if (!string.IsNullOrWhiteSpace(vmName))
+                                        {
+                                            groupInfo.VMMembers.Add(vmName);
+                                            FileLogger.Message($"Added VM member: '{vmName}' to group '{groupInfo.Name}'",
+                                                FileLogger.EventType.Information, 2073);
+                                        }
+                                    }
+                                }
+                            }
+                            else if (actualValue is string strValue && !string.IsNullOrWhiteSpace(strValue))
+                            {
+                                // Handle case where it's returned as a single string
+                                groupInfo.VMMembers.Add(strValue);
+                                FileLogger.Message($"Added VM member (string): '{strValue}' to group '{groupInfo.Name}'",
+                                    FileLogger.EventType.Information, 2074);
                             }
                         }
+                        
+                        FileLogger.Message($"Total VM members parsed for group '{groupInfo.Name}': {groupInfo.VMMembers.Count}",
+                            FileLogger.EventType.Information, 2075);
 
                         // Process Group Members array
                         var groupMembersProperty = result.Properties["GroupMembers"]?.Value;
-                        if (groupMembersProperty != null && groupMembersProperty is System.Collections.IEnumerable groupEnum)
+                        FileLogger.Message($"Group Members property type for group '{groupInfo.Name}': {groupMembersProperty?.GetType().FullName ?? "null"}",
+                            FileLogger.EventType.Information, 2076);
+                        
+                        if (groupMembersProperty != null)
                         {
-                            foreach (var item in groupEnum)
+                            // Unwrap PSObject if needed
+                            object actualValue = groupMembersProperty;
+                            if (groupMembersProperty is PSObject psObj)
                             {
-                                if (item != null)
-                                    groupInfo.GroupMembers.Add(item.ToString());
+                                actualValue = psObj.BaseObject;
+                                FileLogger.Message($"Unwrapped PSObject - BaseObject type: {actualValue?.GetType().FullName ?? "null"}",
+                                    FileLogger.EventType.Information, 2081);
+                            }
+                            
+                            // Handle different types that might be returned
+                            if (actualValue is System.Collections.IEnumerable groupEnum && !(actualValue is string))
+                            {
+                                foreach (var item in groupEnum)
+                                {
+                                    if (item != null)
+                                    {
+                                        // Unwrap PSObject items if needed
+                                        object actualItem = item;
+                                        if (item is PSObject psItem)
+                                        {
+                                            actualItem = psItem.BaseObject;
+                                        }
+                                        
+                                        string groupName = actualItem.ToString();
+                                        if (!string.IsNullOrWhiteSpace(groupName))
+                                        {
+                                            groupInfo.GroupMembers.Add(groupName);
+                                            FileLogger.Message($"Added Group member: '{groupName}' to group '{groupInfo.Name}'",
+                                                FileLogger.EventType.Information, 2077);
+                                        }
+                                    }
+                                }
+                            }
+                            else if (actualValue is string strValue && !string.IsNullOrWhiteSpace(strValue))
+                            {
+                                // Handle case where it's returned as a single string
+                                groupInfo.GroupMembers.Add(strValue);
+                                FileLogger.Message($"Added Group member (string): '{strValue}' to group '{groupInfo.Name}'",
+                                    FileLogger.EventType.Information, 2078);
                             }
                         }
+                        
+                        FileLogger.Message($"Total Group members parsed for group '{groupInfo.Name}': {groupInfo.GroupMembers.Count}",
+                            FileLogger.EventType.Information, 2079);
 
                         // Set display name for group type
                         groupInfo.GroupTypeDisplay = groupInfo.GroupType switch
