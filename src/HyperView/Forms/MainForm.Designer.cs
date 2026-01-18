@@ -47,7 +47,28 @@
             datagridviewVMGroups = new DataGridView();
             tabpageManageNetwork = new TabPage();
             tabpagehvHosts = new TabPage();
+            buttonLoadHostsrefresh = new Button();
+            datagridviewhvHosts = new DataGridView();
+            label1 = new Label();
             tabpagehvClusters = new TabPage();
+            datagridviewClusterVMs = new DataGridView();
+            labelClusterVMs = new Label();
+            datagridviewClusterNodes = new DataGridView();
+            labelClusterNodes = new Label();
+            groupBoxClusterInfo = new GroupBox();
+            labelSharedVolumesValue = new Label();
+            labelSharedVolumes = new Label();
+            labelClusterNetworksValue = new Label();
+            labelClusterNetworks = new Label();
+            labelCurrentNodeValue = new Label();
+            labelCurrentNode = new Label();
+            labelTotalNodesValue = new Label();
+            labelTotalNodes = new Label();
+            labelClusterNameValue = new Label();
+            labelClusterName = new Label();
+            buttonRefreshClusterInfo = new Button();
+            labelClustersHelpText = new Label();
+            buttonSummaryClustersOverviewView = new Button();
             tabpagehvStorage = new TabPage();
             tabpagehvNetworking = new TabPage();
             tabpagehvCheckpoints = new TabPage();
@@ -81,7 +102,6 @@
             toolStripStatusLabelTextMainForm = new ToolStripStatusLabel();
             groupBoxMainFormServerDetails = new GroupBox();
             toolstripstatuslabelMain_CreatedBy = new Label();
-            buttonSummaryClustersOverviewView = new Button();
             ((System.ComponentModel.ISupportInitialize)datagridviewVMOverView).BeginInit();
             tabcontrolMainForm.SuspendLayout();
             tabpagehvOverview.SuspendLayout();
@@ -89,7 +109,12 @@
             groupBox2.SuspendLayout();
             groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)datagridviewVMGroups).BeginInit();
+            tabpagehvHosts.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)datagridviewhvHosts).BeginInit();
             tabpagehvClusters.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)datagridviewClusterVMs).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)datagridviewClusterNodes).BeginInit();
+            groupBoxClusterInfo.SuspendLayout();
             menuStripTopMainForm.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureboxSupportMe).BeginInit();
             statusStripMainForm.SuspendLayout();
@@ -292,6 +317,9 @@
             // 
             // tabpagehvHosts
             // 
+            tabpagehvHosts.Controls.Add(buttonLoadHostsrefresh);
+            tabpagehvHosts.Controls.Add(datagridviewhvHosts);
+            tabpagehvHosts.Controls.Add(label1);
             tabpagehvHosts.Location = new Point(4, 24);
             tabpagehvHosts.Name = "tabpagehvHosts";
             tabpagehvHosts.Size = new Size(1613, 844);
@@ -299,8 +327,47 @@
             tabpagehvHosts.Text = "hvHosts";
             tabpagehvHosts.UseVisualStyleBackColor = true;
             // 
+            // buttonLoadHostsrefresh
+            // 
+            buttonLoadHostsrefresh.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            buttonLoadHostsrefresh.Location = new Point(1490, 8);
+            buttonLoadHostsrefresh.Name = "buttonLoadHostsrefresh";
+            buttonLoadHostsrefresh.Size = new Size(120, 23);
+            buttonLoadHostsrefresh.TabIndex = 2;
+            buttonLoadHostsrefresh.Text = "&Load Hosts/refresh";
+            buttonLoadHostsrefresh.UseVisualStyleBackColor = true;
+            buttonLoadHostsrefresh.Click += buttonLoadHostsrefresh_Click;
+            // 
+            // datagridviewhvHosts
+            // 
+            datagridviewhvHosts.AllowUserToAddRows = false;
+            datagridviewhvHosts.AllowUserToDeleteRows = false;
+            datagridviewhvHosts.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            datagridviewhvHosts.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            datagridviewhvHosts.Location = new Point(9, 38);
+            datagridviewhvHosts.Name = "datagridviewhvHosts";
+            datagridviewhvHosts.ReadOnly = true;
+            datagridviewhvHosts.Size = new Size(1601, 803);
+            datagridviewhvHosts.TabIndex = 1;
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(6, 3);
+            label1.Name = "label1";
+            label1.Size = new Size(457, 15);
+            label1.TabIndex = 0;
+            label1.Text = "This view provides overview the Hyper-V Host space and information about hardware";
+            // 
             // tabpagehvClusters
             // 
+            tabpagehvClusters.Controls.Add(datagridviewClusterVMs);
+            tabpagehvClusters.Controls.Add(labelClusterVMs);
+            tabpagehvClusters.Controls.Add(datagridviewClusterNodes);
+            tabpagehvClusters.Controls.Add(labelClusterNodes);
+            tabpagehvClusters.Controls.Add(groupBoxClusterInfo);
+            tabpagehvClusters.Controls.Add(buttonRefreshClusterInfo);
+            tabpagehvClusters.Controls.Add(labelClustersHelpText);
             tabpagehvClusters.Controls.Add(buttonSummaryClustersOverviewView);
             tabpagehvClusters.Location = new Point(4, 24);
             tabpagehvClusters.Name = "tabpagehvClusters";
@@ -308,6 +375,198 @@
             tabpagehvClusters.TabIndex = 4;
             tabpagehvClusters.Text = "hvClusters";
             tabpagehvClusters.UseVisualStyleBackColor = true;
+            // 
+            // datagridviewClusterVMs
+            // 
+            datagridviewClusterVMs.AllowUserToAddRows = false;
+            datagridviewClusterVMs.AllowUserToDeleteRows = false;
+            datagridviewClusterVMs.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            datagridviewClusterVMs.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            datagridviewClusterVMs.Location = new Point(6, 545);
+            datagridviewClusterVMs.Name = "datagridviewClusterVMs";
+            datagridviewClusterVMs.ReadOnly = true;
+            datagridviewClusterVMs.Size = new Size(1604, 296);
+            datagridviewClusterVMs.TabIndex = 13;
+            // 
+            // labelClusterVMs
+            // 
+            labelClusterVMs.AutoSize = true;
+            labelClusterVMs.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            labelClusterVMs.Location = new Point(6, 527);
+            labelClusterVMs.Name = "labelClusterVMs";
+            labelClusterVMs.Size = new Size(167, 15);
+            labelClusterVMs.TabIndex = 12;
+            labelClusterVMs.Text = "Highly Available VMs (0 VMs)";
+            // 
+            // datagridviewClusterNodes
+            // 
+            datagridviewClusterNodes.AllowUserToAddRows = false;
+            datagridviewClusterNodes.AllowUserToDeleteRows = false;
+            datagridviewClusterNodes.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            datagridviewClusterNodes.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            datagridviewClusterNodes.Location = new Point(6, 308);
+            datagridviewClusterNodes.Name = "datagridviewClusterNodes";
+            datagridviewClusterNodes.ReadOnly = true;
+            datagridviewClusterNodes.Size = new Size(1604, 200);
+            datagridviewClusterNodes.TabIndex = 11;
+            // 
+            // labelClusterNodes
+            // 
+            labelClusterNodes.AutoSize = true;
+            labelClusterNodes.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            labelClusterNodes.Location = new Point(6, 290);
+            labelClusterNodes.Name = "labelClusterNodes";
+            labelClusterNodes.Size = new Size(131, 15);
+            labelClusterNodes.TabIndex = 10;
+            labelClusterNodes.Text = "Cluster Nodes (0 total)";
+            // 
+            // groupBoxClusterInfo
+            // 
+            groupBoxClusterInfo.Controls.Add(labelSharedVolumesValue);
+            groupBoxClusterInfo.Controls.Add(labelSharedVolumes);
+            groupBoxClusterInfo.Controls.Add(labelClusterNetworksValue);
+            groupBoxClusterInfo.Controls.Add(labelClusterNetworks);
+            groupBoxClusterInfo.Controls.Add(labelCurrentNodeValue);
+            groupBoxClusterInfo.Controls.Add(labelCurrentNode);
+            groupBoxClusterInfo.Controls.Add(labelTotalNodesValue);
+            groupBoxClusterInfo.Controls.Add(labelTotalNodes);
+            groupBoxClusterInfo.Controls.Add(labelClusterNameValue);
+            groupBoxClusterInfo.Controls.Add(labelClusterName);
+            groupBoxClusterInfo.Location = new Point(6, 38);
+            groupBoxClusterInfo.Name = "groupBoxClusterInfo";
+            groupBoxClusterInfo.Size = new Size(1604, 240);
+            groupBoxClusterInfo.TabIndex = 7;
+            groupBoxClusterInfo.TabStop = false;
+            groupBoxClusterInfo.Text = "Cluster Information";
+            // 
+            // labelSharedVolumesValue
+            // 
+            labelSharedVolumesValue.AutoSize = true;
+            labelSharedVolumesValue.Location = new Point(150, 169);
+            labelSharedVolumesValue.Name = "labelSharedVolumesValue";
+            labelSharedVolumesValue.Size = new Size(12, 15);
+            labelSharedVolumesValue.TabIndex = 9;
+            labelSharedVolumesValue.Text = "-";
+            // 
+            // labelSharedVolumes
+            // 
+            labelSharedVolumes.AutoSize = true;
+            labelSharedVolumes.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            labelSharedVolumes.Location = new Point(16, 169);
+            labelSharedVolumes.Name = "labelSharedVolumes";
+            labelSharedVolumes.Size = new Size(99, 15);
+            labelSharedVolumes.TabIndex = 8;
+            labelSharedVolumes.Text = "Shared Volumes:";
+            // 
+            // labelClusterNetworksValue
+            // 
+            labelClusterNetworksValue.AutoSize = true;
+            labelClusterNetworksValue.Location = new Point(150, 139);
+            labelClusterNetworksValue.Name = "labelClusterNetworksValue";
+            labelClusterNetworksValue.Size = new Size(12, 15);
+            labelClusterNetworksValue.TabIndex = 7;
+            labelClusterNetworksValue.Text = "-";
+            // 
+            // labelClusterNetworks
+            // 
+            labelClusterNetworks.AutoSize = true;
+            labelClusterNetworks.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            labelClusterNetworks.Location = new Point(16, 139);
+            labelClusterNetworks.Name = "labelClusterNetworks";
+            labelClusterNetworks.Size = new Size(107, 15);
+            labelClusterNetworks.TabIndex = 6;
+            labelClusterNetworks.Text = "Cluster Networks:";
+            // 
+            // labelCurrentNodeValue
+            // 
+            labelCurrentNodeValue.AutoSize = true;
+            labelCurrentNodeValue.Location = new Point(150, 109);
+            labelCurrentNodeValue.Name = "labelCurrentNodeValue";
+            labelCurrentNodeValue.Size = new Size(12, 15);
+            labelCurrentNodeValue.TabIndex = 5;
+            labelCurrentNodeValue.Text = "-";
+            // 
+            // labelCurrentNode
+            // 
+            labelCurrentNode.AutoSize = true;
+            labelCurrentNode.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            labelCurrentNode.Location = new Point(16, 109);
+            labelCurrentNode.Name = "labelCurrentNode";
+            labelCurrentNode.Size = new Size(86, 15);
+            labelCurrentNode.TabIndex = 4;
+            labelCurrentNode.Text = "Current Node:";
+            // 
+            // labelTotalNodesValue
+            // 
+            labelTotalNodesValue.AutoSize = true;
+            labelTotalNodesValue.Location = new Point(150, 79);
+            labelTotalNodesValue.Name = "labelTotalNodesValue";
+            labelTotalNodesValue.Size = new Size(12, 15);
+            labelTotalNodesValue.TabIndex = 3;
+            labelTotalNodesValue.Text = "-";
+            // 
+            // labelTotalNodes
+            // 
+            labelTotalNodes.AutoSize = true;
+            labelTotalNodes.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            labelTotalNodes.Location = new Point(16, 79);
+            labelTotalNodes.Name = "labelTotalNodes";
+            labelTotalNodes.Size = new Size(75, 15);
+            labelTotalNodes.TabIndex = 2;
+            labelTotalNodes.Text = "Total Nodes:";
+            // 
+            // labelClusterNameValue
+            // 
+            labelClusterNameValue.AutoSize = true;
+            labelClusterNameValue.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            labelClusterNameValue.ForeColor = Color.DarkBlue;
+            labelClusterNameValue.Location = new Point(150, 40);
+            labelClusterNameValue.Name = "labelClusterNameValue";
+            labelClusterNameValue.Size = new Size(125, 21);
+            labelClusterNameValue.TabIndex = 1;
+            labelClusterNameValue.Text = "Not Connected";
+            // 
+            // labelClusterName
+            // 
+            labelClusterName.AutoSize = true;
+            labelClusterName.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            labelClusterName.ForeColor = Color.DarkBlue;
+            labelClusterName.Location = new Point(16, 44);
+            labelClusterName.Name = "labelClusterName";
+            labelClusterName.Size = new Size(85, 15);
+            labelClusterName.TabIndex = 0;
+            labelClusterName.Text = "Cluster Name:";
+            // 
+            // buttonRefreshClusterInfo
+            // 
+            buttonRefreshClusterInfo.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            buttonRefreshClusterInfo.Location = new Point(1486, 3);
+            buttonRefreshClusterInfo.Name = "buttonRefreshClusterInfo";
+            buttonRefreshClusterInfo.Size = new Size(124, 23);
+            buttonRefreshClusterInfo.TabIndex = 6;
+            buttonRefreshClusterInfo.Text = "&Load Cluster/refresh";
+            buttonRefreshClusterInfo.UseVisualStyleBackColor = true;
+            buttonRefreshClusterInfo.Click += buttonRefreshClusterInfoUI_Click;
+            // 
+            // labelClustersHelpText
+            // 
+            labelClustersHelpText.AutoSize = true;
+            labelClustersHelpText.Location = new Point(6, 3);
+            labelClustersHelpText.Name = "labelClustersHelpText";
+            labelClustersHelpText.Size = new Size(800, 15);
+            labelClustersHelpText.TabIndex = 5;
+            labelClustersHelpText.Text = "This view provides overview of Hyper-V Failover Cluster information including nodes, networks, shared volumes, and highly available virtual machines.";
+            // 
+            // buttonSummaryClustersOverviewView
+            // 
+            buttonSummaryClustersOverviewView.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            buttonSummaryClustersOverviewView.Location = new Point(1405, 3);
+            buttonSummaryClustersOverviewView.Name = "buttonSummaryClustersOverviewView";
+            buttonSummaryClustersOverviewView.Size = new Size(75, 23);
+            buttonSummaryClustersOverviewView.TabIndex = 4;
+            buttonSummaryClustersOverviewView.Text = "Summary";
+            buttonSummaryClustersOverviewView.UseVisualStyleBackColor = true;
+            buttonSummaryClustersOverviewView.Click += buttonSummaryClustersOverviewView_Click;
             // 
             // tabpagehvStorage
             // 
@@ -578,17 +837,6 @@
             toolstripstatuslabelMain_CreatedBy.TabIndex = 4;
             toolstripstatuslabelMain_CreatedBy.Text = "Created by: Michael Morten Sonne";
             // 
-            // buttonSummaryClustersOverviewView
-            // 
-            buttonSummaryClustersOverviewView.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            buttonSummaryClustersOverviewView.Location = new Point(1412, 3);
-            buttonSummaryClustersOverviewView.Name = "buttonSummaryClustersOverviewView";
-            buttonSummaryClustersOverviewView.Size = new Size(75, 23);
-            buttonSummaryClustersOverviewView.TabIndex = 4;
-            buttonSummaryClustersOverviewView.Text = "Summary";
-            buttonSummaryClustersOverviewView.UseVisualStyleBackColor = true;
-            buttonSummaryClustersOverviewView.Click += buttonSummaryClustersOverviewView_Click;
-            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -615,7 +863,15 @@
             groupBox2.ResumeLayout(false);
             groupBox1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)datagridviewVMGroups).EndInit();
+            tabpagehvHosts.ResumeLayout(false);
+            tabpagehvHosts.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)datagridviewhvHosts).EndInit();
             tabpagehvClusters.ResumeLayout(false);
+            tabpagehvClusters.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)datagridviewClusterVMs).EndInit();
+            ((System.ComponentModel.ISupportInitialize)datagridviewClusterNodes).EndInit();
+            groupBoxClusterInfo.ResumeLayout(false);
+            groupBoxClusterInfo.PerformLayout();
             menuStripTopMainForm.ResumeLayout(false);
             menuStripTopMainForm.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureboxSupportMe).EndInit();
@@ -680,5 +936,25 @@
         private Label toolstripstatuslabelMain_CreatedBy;
         private ToolStripMenuItem allVMDataToolStripMenuItem;
         private Button buttonSummaryClustersOverviewView;
+        private Label label1;
+        private DataGridView datagridviewhvHosts;
+        private Button buttonLoadHostsrefresh;
+        private Label labelClustersHelpText;
+        private Button buttonRefreshClusterInfo;
+        private GroupBox groupBoxClusterInfo;
+        private Label labelClusterName;
+        private Label labelClusterNameValue;
+        private Label labelTotalNodes;
+        private Label labelTotalNodesValue;
+        private Label labelCurrentNode;
+        private Label labelCurrentNodeValue;
+        private Label labelClusterNetworks;
+        private Label labelClusterNetworksValue;
+        private Label labelSharedVolumes;
+        private Label labelSharedVolumesValue;
+        private Label labelClusterNodes;
+        private DataGridView datagridviewClusterNodes;
+        private Label labelClusterVMs;
+        private DataGridView datagridviewClusterVMs;
     }
 }

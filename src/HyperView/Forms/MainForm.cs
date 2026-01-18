@@ -531,7 +531,7 @@ namespace HyperView
             {
                 Message($"Error getting cluster VMs: {ex.Message}",
                     EventType.Error, 2182);
-                
+
                 // Fall back to standard Get-VM
                 Message("Falling back to standard Get-VM",
                     EventType.Warning, 2183);
@@ -2631,8 +2631,6 @@ Management:
                 var details = new System.Text.StringBuilder();
                 details.AppendLine($"Cluster Details - {clusterInfo.ClusterName}");
                 details.AppendLine();
-                details.AppendLine("═══════════════════════════════════════════");
-                details.AppendLine();
 
                 // Basic Information
                 details.AppendLine("🖥️ Cluster Overview:");
@@ -2754,5 +2752,480 @@ Management:
             // Show detailed cluster information
             ShowClusterInformation();
         }
+
+        /// <summary>
+        /// Handles the Load Hosts/refresh button click event
+        /// </summary>
+        private void buttonLoadHostsrefresh_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Message("User requested host details refresh",
+                    EventType.Information, 4010);
+
+                // Check if there's an active Hyper-V connection
+                if (!SessionContext.IsSessionActive())
+                {
+                    MessageBox.Show("No active Hyper-V connection. Please connect to a Hyper-V host first.",
+                        "Connection Required",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                this.Cursor = Cursors.WaitCursor;
+                toolStripStatusLabelTextMainForm.Text = "Loading host details...";
+
+                Message("Retrieving Hyper-V host details...",
+                    EventType.Information, 4011);
+
+                // Get host details
+                var hostDetails = HostDetails.GetHyperVHostDetails(
+                    cmd => ExecutePowerShellCommand(cmd),
+                    (node, cmd) => ExecutePowerShellCommandOnNode(node, cmd));
+
+                if (hostDetails != null && hostDetails.Count > 0)
+                {
+                    Message($"Retrieved details for {hostDetails.Count} host(s), updating DataGridView",
+                        EventType.Information, 4012);
+
+                    // Update the DataGridView
+                    UpdateHostsDataGridView(hostDetails);
+
+                    string message = hostDetails.Count == 1 ? "Ready - 1 host loaded" : $"Ready - {hostDetails.Count} hosts loaded";
+                    toolStripStatusLabelTextMainForm.Text = message;
+
+                    MessageBox.Show($"Host details refreshed successfully.\n\nFound {hostDetails.Count} host(s).",
+                        "Refresh Complete",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+                else
+                {
+                    Message("No host details retrieved",
+                        EventType.Warning, 4013);
+                    toolStripStatusLabelTextMainForm.Text = "No host data available";
+
+                    MessageBox.Show("No host details found or error retrieving details.",
+                        "Refresh Complete",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                string errorMsg = $"Error refreshing host details: {ex.Message}";
+                Message(errorMsg, EventType.Error, 4014);
+
+                MessageBox.Show(errorMsg,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+
+                toolStripStatusLabelTextMainForm.Text = "Error loading host details";
+            }
+            finally
+            {
+                this.Cursor = Cursors.Default;
+            }
+        }
+
+        /// <summary>
+        /// Updates the hvHosts DataGridView with host details
+        /// </summary>
+        private void UpdateHostsDataGridView(List<HostDetailsInfo> hostDetails)
+        {
+            try
+            {
+                if (datagridviewhvHosts == null)
+                {
+                    Message("datagridviewhvHosts control not found",
+                        EventType.Warning, 4015);
+                    return;
+                }
+
+                // Clear existing data
+                datagridviewhvHosts.DataSource = null;
+                datagridviewhvHosts.Rows.Clear();
+                datagridviewhvHosts.Columns.Clear();
+
+                if (hostDetails == null || hostDetails.Count == 0)
+                {
+                    Message("No host details to display",
+                        EventType.Information, 4016);
+                    return;
+                }
+
+                Message($"Updating hvHosts DataGridView with {hostDetails.Count} host(s)",
+                    EventType.Information, 4017);
+
+                // Create DataTable
+                var dataTable = new DataTable();
+                dataTable.Columns.Add("Host Name", typeof(string));
+                dataTable.Columns.Add("Cluster Name", typeof(string));
+                dataTable.Columns.Add("Node State", typeof(string));
+                dataTable.Columns.Add("Domain", typeof(string));
+                dataTable.Columns.Add("OS", typeof(string));
+                dataTable.Columns.Add("Version", typeof(string));
+                dataTable.Columns.Add("Uptime", typeof(string));
+                dataTable.Columns.Add("Processor", typeof(string));
+                dataTable.Columns.Add("Sockets", typeof(string));
+                dataTable.Columns.Add("Cores", typeof(string));
+                dataTable.Columns.Add("Logical CPUs", typeof(string));
+                dataTable.Columns.Add("Hyper-Threading", typeof(string));
+                dataTable.Columns.Add("Total RAM (GB)", typeof(string));
+                dataTable.Columns.Add("Used RAM (GB)", typeof(string));
+                dataTable.Columns.Add("Free RAM (GB)", typeof(string));
+                dataTable.Columns.Add("RAM Usage %", typeof(string));
+                dataTable.Columns.Add("Total VMs", typeof(string));
+                dataTable.Columns.Add("Running VMs", typeof(string));
+                dataTable.Columns.Add("Stopped VMs", typeof(string));
+                dataTable.Columns.Add("Virtual Switches", typeof(string));
+                dataTable.Columns.Add("Live Migration", typeof(string));
+                dataTable.Columns.Add("Enhanced Session", typeof(string));
+                dataTable.Columns.Add("NUMA Spanning", typeof(string));
+                dataTable.Columns.Add("IP Addresses", typeof(string));
+                dataTable.Columns.Add("Manufacturer", typeof(string));
+                dataTable.Columns.Add("Model", typeof(string));
+                dataTable.Columns.Add("Serial Number", typeof(string));
+                dataTable.Columns.Add("License Status", typeof(string));
+                dataTable.Columns.Add("License Type", typeof(string));
+
+                // Add rows
+                foreach (var host in hostDetails)
+                {
+                    var row = dataTable.NewRow();
+                    row["Host Name"] = host.HostName;
+                    row["Cluster Name"] = host.ClusterName;
+                    row["Node State"] = host.NodeState;
+                    row["Domain"] = host.Domain;
+                    row["OS"] = host.OperatingSystem;
+                    row["Version"] = host.OSVersion;
+                    row["Uptime"] = host.Uptime;
+                    row["Processor"] = host.Processor;
+                    row["Sockets"] = host.Sockets.ToString();
+                    row["Cores"] = host.Cores.ToString();
+                    row["Logical CPUs"] = host.LogicalCPUs.ToString();
+                    row["Hyper-Threading"] = host.HyperThreading;
+                    row["Total RAM (GB)"] = host.TotalMemoryGB.ToString("F2");
+                    row["Used RAM (GB)"] = host.UsedMemoryGB.ToString("F2");
+                    row["Free RAM (GB)"] = host.FreeMemoryGB.ToString("F2");
+                    row["RAM Usage %"] = host.MemoryUsagePercent.ToString("F1");
+                    row["Total VMs"] = host.TotalVMs.ToString();
+                    row["Running VMs"] = host.RunningVMs.ToString();
+                    row["Stopped VMs"] = host.StoppedVMs.ToString();
+                    row["Virtual Switches"] = host.VirtualSwitches.ToString();
+                    row["Live Migration"] = host.LiveMigration;
+                    row["Enhanced Session"] = host.EnhancedSession;
+                    row["NUMA Spanning"] = host.NUMASpanning;
+                    row["IP Addresses"] = host.IPAddresses;
+                    row["Manufacturer"] = host.Manufacturer;
+                    row["Model"] = host.Model;
+                    row["Serial Number"] = host.SerialNumber;
+                    row["License Status"] = host.LicenseStatus;
+                    row["License Type"] = host.LicenseType;
+
+                    dataTable.Rows.Add(row);
+                }
+
+                // Bind to DataGridView
+                datagridviewhvHosts.DataSource = dataTable;
+
+                // Configure DataGridView properties
+                datagridviewhvHosts.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+                datagridviewhvHosts.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                datagridviewhvHosts.MultiSelect = false;
+                datagridviewhvHosts.ReadOnly = true;
+                datagridviewhvHosts.AllowUserToAddRows = false;
+                datagridviewhvHosts.AllowUserToDeleteRows = false;
+                datagridviewhvHosts.RowHeadersVisible = false;
+                datagridviewhvHosts.AllowUserToResizeRows = false;
+
+                // Apply alternating row colors
+                foreach (DataGridViewRow row in datagridviewhvHosts.Rows)
+                {
+                    if (row.Index % 2 == 0)
+                    {
+                        row.DefaultCellStyle.BackColor = Color.AliceBlue;
+                    }
+                    else
+                    {
+                        row.DefaultCellStyle.BackColor = Color.White;
+                    }
+                }
+
+                // Set minimum column widths for key columns
+                if (datagridviewhvHosts.Columns.Contains("Host Name"))
+                    datagridviewhvHosts.Columns["Host Name"].MinimumWidth = 120;
+                if (datagridviewhvHosts.Columns.Contains("Cluster Name"))
+                    datagridviewhvHosts.Columns["Cluster Name"].MinimumWidth = 100;
+                if (datagridviewhvHosts.Columns.Contains("Processor"))
+                    datagridviewhvHosts.Columns["Processor"].MinimumWidth = 200;
+
+                Message($"hvHosts DataGridView updated successfully with {hostDetails.Count} host(s)",
+                    EventType.Information, 4018);
+            }
+            catch (Exception ex)
+            {
+                Message($"Error updating hvHosts DataGridView: {ex.Message}",
+                    EventType.Error, 4019);
+            }
+        }
+
+        /// <summary>
+        /// Loads and displays cluster information in the hvClusters tab
+        /// </summary>
+        private void LoadClusterInformationView()
+        {
+            try
+            {
+                Message("User requested cluster information view refresh",
+                    EventType.Information, 4020);
+
+                // Check if there's an active Hyper-V connection
+                if (!SessionContext.IsSessionActive())
+                {
+                    MessageBox.Show("No active Hyper-V connection. Please connect to a Hyper-V host first.",
+                        "Connection Required",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                // Check if connected to a cluster
+                if (!SessionContext.IsCluster)
+                {
+                    labelClusterNameValue.Text = "Not a Cluster";
+                    labelClusterNameValue.ForeColor = Color.Gray;
+                    labelTotalNodesValue.Text = "-";
+                    labelCurrentNodeValue.Text = "-";
+                    labelClusterNetworksValue.Text = "-";
+                    labelSharedVolumesValue.Text = "-";
+                    labelClusterNodes.Text = "Cluster Nodes (0 total)";
+                    labelClusterVMs.Text = "Highly Available VMs (0 VMs)";
+
+                    MessageBox.Show($"The connected host '{SessionContext.ServerName}' is not part of a cluster.\n\n" +
+                                  "This is a standalone Hyper-V host.",
+                        "Not a Cluster",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    return;
+                }
+
+                this.Cursor = Cursors.WaitCursor;
+                toolStripStatusLabelTextMainForm.Text = "Loading cluster information...";
+
+                Message("Retrieving detailed cluster information...",
+                    EventType.Information, 4021);
+
+                // Get cluster information
+                var clusterInfo = Cluster.GetClusterInformation(cmd => ExecutePowerShellCommand(cmd));
+
+                if (clusterInfo == null)
+                {
+                    MessageBox.Show("Failed to retrieve cluster information.",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Update cluster info labels
+                labelClusterNameValue.Text = clusterInfo.ClusterName;
+                labelClusterNameValue.ForeColor = Color.DarkBlue;
+                labelTotalNodesValue.Text = clusterInfo.Nodes.Count.ToString();
+                labelCurrentNodeValue.Text = clusterInfo.CurrentNode;
+                labelClusterNetworksValue.Text = clusterInfo.Networks.Count.ToString();
+                labelSharedVolumesValue.Text = clusterInfo.SharedStorage.Count.ToString();
+
+                // Update Cluster Nodes DataGridView
+                labelClusterNodes.Text = $"Cluster Nodes ({clusterInfo.Nodes.Count} total)";
+                UpdateClusterNodesDataGridView(clusterInfo.Nodes);
+
+                // Update Cluster VMs DataGridView
+                labelClusterVMs.Text = $"Highly Available VMs ({clusterInfo.VirtualMachines.Count} VMs)";
+                UpdateClusterVMsDataGridView(clusterInfo.VirtualMachines);
+
+                toolStripStatusLabelTextMainForm.Text = $"Cluster info loaded - {clusterInfo.Nodes.Count} nodes, {clusterInfo.VirtualMachines.Count} VMs";
+
+                Message($"Cluster information loaded successfully - {clusterInfo.Nodes.Count} nodes, {clusterInfo.VirtualMachines.Count} VMs",
+                    EventType.Information, 4022);
+            }
+            catch (Exception ex)
+            {
+                string errorMsg = $"Error loading cluster information: {ex.Message}";
+                Message(errorMsg, EventType.Error, 4023);
+
+                MessageBox.Show(errorMsg,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+
+                toolStripStatusLabelTextMainForm.Text = "Error loading cluster information";
+            }
+            finally
+            {
+                this.Cursor = Cursors.Default;
+            }
+        }
+
+        /// <summary>
+        /// Updates the Cluster Nodes DataGridView
+        /// </summary>
+        private void UpdateClusterNodesDataGridView(List<ClusterNodeInfo> nodes)
+        {
+            try
+            {
+                // Clear existing data
+                datagridviewClusterNodes.DataSource = null;
+                datagridviewClusterNodes.Rows.Clear();
+                datagridviewClusterNodes.Columns.Clear();
+
+                if (nodes == null || nodes.Count == 0)
+                {
+                    return;
+                }
+
+                // Create DataTable
+                var dataTable = new DataTable();
+                dataTable.Columns.Add("Node Name", typeof(string));
+                dataTable.Columns.Add("State", typeof(string));
+                dataTable.Columns.Add("Node Weight", typeof(string));
+                dataTable.Columns.Add("Dynamic Weight", typeof(string));
+                dataTable.Columns.Add("Drain Status", typeof(string));
+                dataTable.Columns.Add("Fault Domain", typeof(string));
+
+                // Add rows
+                foreach (var node in nodes)
+                {
+                    var row = dataTable.NewRow();
+                    row["Node Name"] = node.Name;
+                    row["State"] = node.State;
+                    row["Node Weight"] = node.NodeWeight.ToString();
+                    row["Dynamic Weight"] = node.DynamicWeight.ToString();
+                    row["Drain Status"] = node.DrainStatus;
+                    row["Fault Domain"] = string.IsNullOrEmpty(node.FaultDomain) ? "N/A" : node.FaultDomain;
+
+                    dataTable.Rows.Add(row);
+                }
+
+                // Bind to DataGridView
+                datagridviewClusterNodes.DataSource = dataTable;
+                datagridviewClusterNodes.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+                datagridviewClusterNodes.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                datagridviewClusterNodes.RowHeadersVisible = false;
+
+                // Color code node state
+                foreach (DataGridViewRow row in datagridviewClusterNodes.Rows)
+                {
+                    var state = row.Cells["State"].Value?.ToString();
+                    if (state == "Up")
+                    {
+                        row.Cells["State"].Style.BackColor = Color.LightGreen;
+                        row.Cells["State"].Style.ForeColor = Color.DarkGreen;
+                    }
+                    else if (state == "Down")
+                    {
+                        row.Cells["State"].Style.BackColor = Color.LightCoral;
+                        row.Cells["State"].Style.ForeColor = Color.DarkRed;
+                    }
+                    else if (state == "Paused")
+                    {
+                        row.Cells["State"].Style.BackColor = Color.LightYellow;
+                        row.Cells["State"].Style.ForeColor = Color.DarkOrange;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Message($"Error updating cluster nodes DataGridView: {ex.Message}",
+                    EventType.Error, 4024);
+            }
+        }
+
+        /// <summary>
+        /// Updates the Cluster VMs DataGridView
+        /// </summary>
+        private void UpdateClusterVMsDataGridView(List<ClusterGroupInfo> virtualMachines)
+        {
+            try
+            {
+                // Clear existing data
+                datagridviewClusterVMs.DataSource = null;
+                datagridviewClusterVMs.Rows.Clear();
+                datagridviewClusterVMs.Columns.Clear();
+
+                if (virtualMachines == null || virtualMachines.Count == 0)
+                {
+                    return;
+                }
+
+                // Create DataTable
+                var dataTable = new DataTable();
+                dataTable.Columns.Add("VM Name", typeof(string));
+                dataTable.Columns.Add("Owner Node", typeof(string));
+                dataTable.Columns.Add("State", typeof(string));
+                dataTable.Columns.Add("Priority", typeof(string));
+                dataTable.Columns.Add("Preferred Owners", typeof(string));
+
+                // Add rows
+                foreach (var vm in virtualMachines.OrderBy(v => v.OwnerNode).ThenBy(v => v.Name))
+                {
+                    var row = dataTable.NewRow();
+                    row["VM Name"] = vm.Name;
+                    row["Owner Node"] = vm.OwnerNode;
+                    row["State"] = vm.State;
+                    row["Priority"] = vm.Priority > 0 ? vm.Priority.ToString() : "Default";
+                    row["Preferred Owners"] = string.IsNullOrEmpty(vm.PreferredOwners) ? "Any" : vm.PreferredOwners;
+
+                    dataTable.Rows.Add(row);
+                }
+
+                // Bind to DataGridView
+                datagridviewClusterVMs.DataSource = dataTable;
+                datagridviewClusterVMs.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+                datagridviewClusterVMs.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                datagridviewClusterVMs.RowHeadersVisible = false;
+
+                // Color code VM state
+                foreach (DataGridViewRow row in datagridviewClusterVMs.Rows)
+                {
+                    var state = row.Cells["State"].Value?.ToString();
+                    if (state == "Online")
+                    {
+                        row.Cells["State"].Style.BackColor = Color.LightGreen;
+                        row.Cells["State"].Style.ForeColor = Color.DarkGreen;
+                    }
+                    else if (state == "Offline")
+                    {
+                        row.Cells["State"].Style.BackColor = Color.LightCoral;
+                        row.Cells["State"].Style.ForeColor = Color.DarkRed;
+                    }
+                    else if (state == "Pending")
+                    {
+                        row.Cells["State"].Style.BackColor = Color.LightYellow;
+                        row.Cells["State"].Style.ForeColor = Color.DarkOrange;
+                    }
+                }
+
+                // Set VM Name column wider
+                if (datagridviewClusterVMs.Columns.Contains("VM Name"))
+                    datagridviewClusterVMs.Columns["VM Name"].MinimumWidth = 200;
+            }
+            catch (Exception ex)
+            {
+                Message($"Error updating cluster VMs DataGridView: {ex.Message}",
+                    EventType.Error, 4025);
+            }
+        }
+
+
+        /// <summary>
+        /// Handles the Load Cluster/refresh button click event
+        /// </summary>
+        private void buttonRefreshClusterInfoUI_Click(object sender, EventArgs e)
+        {
+            LoadClusterInformationView();
+        }        
     }
 }
