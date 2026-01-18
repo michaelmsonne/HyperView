@@ -126,6 +126,9 @@
             Controls.Add(labelMembers);
             Controls.Add(labelAvailable);
             Controls.Add(labelThisViewProvidesOver);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
+            MinimizeBox = false;
             Name = "ManageVMGroupMembers";
             StartPosition = FormStartPosition.CenterParent;
             Text = "ManageVMGroupMembers";

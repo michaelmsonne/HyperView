@@ -150,6 +150,7 @@
             buttonSummaryhvOverviewView.TabIndex = 3;
             buttonSummaryhvOverviewView.Text = "Summary";
             buttonSummaryhvOverviewView.UseVisualStyleBackColor = true;
+            buttonSummaryhvOverviewView.Click += buttonSummaryhvOverviewView_Click;
             // 
             // buttonLoadVMsrefresh
             // 

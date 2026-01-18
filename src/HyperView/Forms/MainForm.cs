@@ -1973,7 +1973,7 @@ namespace HyperView
                 // Count running VMs from the grid
                 int totalVMs = datagridviewVMOverView.Rows.Count;
                 int runningVMs = 0;
-                
+
                 foreach (DataGridViewRow row in datagridviewVMOverView.Rows)
                 {
                     var state = row.Cells["State"].Value?.ToString();
@@ -2008,6 +2008,143 @@ namespace HyperView
             finally
             {
                 this.Cursor = Cursors.Default;
+            }
+        }
+
+        private void buttonSummaryhvOverviewView_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Message("User requested VM summary",
+                    EventType.Information, 2155);
+
+                // Check if there's an active Hyper-V connection
+                if (!SessionContext.IsSessionActive())
+                {
+                    MessageBox.Show("No active Hyper-V connection. Please connect to a Hyper-V host first.",
+                        "Connection Required",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                // Check if we have VM data
+                if (datagridviewVMOverView == null || datagridviewVMOverView.Rows.Count == 0)
+                {
+                    MessageBox.Show("No VM data available. Please load VMs first.",
+                        "No Data",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                this.Cursor = Cursors.WaitCursor;
+
+                // Calculate VM statistics
+                int totalVMs = datagridviewVMOverView.Rows.Count;
+                int runningVMs = 0;
+                int stoppedVMs = 0;
+                int gen1VMs = 0;
+                int gen2VMs = 0;
+                int totalProcessors = 0;
+                long totalMemoryAssignedMB = 0;
+                double totalDiskSpaceGB = 0;
+
+                foreach (DataGridViewRow row in datagridviewVMOverView.Rows)
+                {
+                    // Count by state
+                    var state = row.Cells["State"].Value?.ToString();
+                    if (state == "Running")
+                        runningVMs++;
+                    else if (state == "Off")
+                        stoppedVMs++;
+
+                    // Count by generation
+                    var generation = row.Cells["Generation"].Value?.ToString();
+                    if (generation == "1")
+                        gen1VMs++;
+                    else if (generation == "2")
+                        gen2VMs++;
+
+                    // Sum processors
+                    var cpuCount = row.Cells["CPU Count"].Value?.ToString();
+                    if (!string.IsNullOrEmpty(cpuCount) && int.TryParse(cpuCount, out int cpus))
+                        totalProcessors += cpus;
+
+                    // Sum memory assigned
+                    var memAssigned = row.Cells["Memory Assigned (MB)"].Value?.ToString();
+                    if (!string.IsNullOrEmpty(memAssigned) && long.TryParse(memAssigned, out long memory))
+                        totalMemoryAssignedMB += memory;
+
+                    // Sum disk space
+                    var diskSpace = row.Cells["Total Disk (GB)"].Value?.ToString();
+                    if (!string.IsNullOrEmpty(diskSpace) && double.TryParse(diskSpace, out double disk))
+                        totalDiskSpaceGB += disk;
+                }
+
+                // Get VM Groups statistics
+                Message("Retrieving VM Groups for summary...",
+                    EventType.Information, 2156);
+
+                var vmGroups = VMGroups.GetHyperVVMGroups(cmd => ExecutePowerShellCommand(cmd));
+                int totalGroups = vmGroups?.Count ?? 0;
+
+                // Count grouped VMs
+                var groupedVMs = new HashSet<string>();
+                if (vmGroups != null)
+                {
+                    foreach (var group in vmGroups)
+                    {
+                        foreach (var vmName in group.VMMembers)
+                        {
+                            groupedVMs.Add(vmName);
+                        }
+                    }
+                }
+
+                int groupedVMCount = groupedVMs.Count;
+                int ungroupedVMCount = totalVMs - groupedVMCount;
+
+                this.Cursor = Cursors.Default;
+
+                // Create summary message
+                string summaryText = $@"VM Overview Summary - {SessionContext.ServerName}:
+
+VM Statistics:
+• Total VMs: {totalVMs}
+• Running: {runningVMs} | Stopped: {stoppedVMs}
+• Generation 1: {gen1VMs} | Generation 2: {gen2VMs}
+
+Resource Allocation:
+• Total Processors: {totalProcessors}
+• Memory Assigned: {Math.Round(totalMemoryAssignedMB / 1024.0, 1)} GB
+• Total Disk Space: {Math.Round(totalDiskSpaceGB, 1)} GB
+
+VM Groups:
+• Total Groups: {totalGroups}
+• Grouped VMs: {groupedVMCount}
+• Ungrouped VMs: {ungroupedVMCount}";
+
+                Message($"VM summary generated - Total VMs: {totalVMs}, Running: {runningVMs}",
+                    EventType.Information, 2157);
+
+                // Show summary message
+                MessageBox.Show(summaryText,
+                    "VM Overview Loaded",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                this.Cursor = Cursors.Default;
+
+                string errorMsg = $"Error generating VM summary: {ex.Message}";
+                Message(errorMsg, EventType.Error, 2158);
+
+                MessageBox.Show(errorMsg,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
     }
