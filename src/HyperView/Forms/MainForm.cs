@@ -1824,5 +1824,24 @@ namespace HyperView
                 throw;
             }
         }
+
+        private void pictureboxSupportMe_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Process.Start(Globals.ToolStings.URLBuyMeaCoffie);
+
+                // Log the opening of the URL message
+                Message("User clicked the 'Buy me a coffie' picture in MainForm to open the URL: '" + Globals.ToolStings.URLBuyMeaCoffie + "'", EventType.Information, 1052);
+            }
+            catch (Exception ex)
+            {
+                // Show an error message if the URL could not be opened
+                MessageBox.Show(@"Failed to open the URL '" + Globals.ToolStings.URLBuyMeaCoffie + "'. Error: " + ex.Message, @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                // Log the error message
+                Message("Failed to open the URL: " + ex.Message, EventType.Error, 1041);
+            }
+        }
     }
 }

@@ -435,21 +435,21 @@
             // myWebpageToolStripMenuItem
             // 
             myWebpageToolStripMenuItem.Name = "myWebpageToolStripMenuItem";
-            myWebpageToolStripMenuItem.Size = new Size(180, 22);
+            myWebpageToolStripMenuItem.Size = new Size(142, 22);
             myWebpageToolStripMenuItem.Text = "My webpage";
             myWebpageToolStripMenuItem.Click += myWebpageToolStripMenuItem_Click;
             // 
             // myBlogToolStripMenuItem
             // 
             myBlogToolStripMenuItem.Name = "myBlogToolStripMenuItem";
-            myBlogToolStripMenuItem.Size = new Size(180, 22);
+            myBlogToolStripMenuItem.Size = new Size(142, 22);
             myBlogToolStripMenuItem.Text = "My blog";
             myBlogToolStripMenuItem.Click += myBlogToolStripMenuItem_Click;
             // 
             // guideToolStripMenuItem
             // 
             guideToolStripMenuItem.Name = "guideToolStripMenuItem";
-            guideToolStripMenuItem.Size = new Size(180, 22);
+            guideToolStripMenuItem.Size = new Size(142, 22);
             guideToolStripMenuItem.Text = "Guide";
             guideToolStripMenuItem.Click += guideToolStripMenuItem_Click;
             // 
@@ -526,6 +526,7 @@
             pictureboxSupportMe.SizeMode = PictureBoxSizeMode.Zoom;
             pictureboxSupportMe.TabIndex = 1;
             pictureboxSupportMe.TabStop = false;
+            pictureboxSupportMe.Click += pictureboxSupportMe_Click;
             // 
             // statusStripMainForm
             // 

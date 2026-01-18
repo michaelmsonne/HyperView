@@ -26,6 +26,7 @@
         {
             internal static string URLMyBlog = @"https://blog.sonnes.cloud";
             internal static string URLMyWebPage = @"https://sonnes.cloud";
+            internal static string URLBuyMeaCoffie = @"https://buymeacoffee.com/sonnes";
         }
 
         internal class ToolProperties
