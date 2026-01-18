@@ -80,6 +80,7 @@
             toolStripStatusLabelTextMainForm = new ToolStripStatusLabel();
             groupBoxMainFormServerDetails = new GroupBox();
             toolstripstatuslabelMain_CreatedBy = new Label();
+            allVMDataToolStripMenuItem = new ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)datagridviewVMOverView).BeginInit();
             tabcontrolMainForm.SuspendLayout();
             tabpagehvOverview.SuspendLayout();
@@ -479,6 +480,7 @@
             // 
             // exportDataToolStripMenuItem
             // 
+            exportDataToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { allVMDataToolStripMenuItem });
             exportDataToolStripMenuItem.Name = "exportDataToolStripMenuItem";
             exportDataToolStripMenuItem.Size = new Size(273, 22);
             exportDataToolStripMenuItem.Text = "Export data";
@@ -550,6 +552,13 @@
             toolstripstatuslabelMain_CreatedBy.Size = new Size(190, 15);
             toolstripstatuslabelMain_CreatedBy.TabIndex = 4;
             toolstripstatuslabelMain_CreatedBy.Text = "Created by: Michael Morten Sonne";
+            // 
+            // allVMDataToolStripMenuItem
+            // 
+            allVMDataToolStripMenuItem.Name = "allVMDataToolStripMenuItem";
+            allVMDataToolStripMenuItem.Size = new Size(180, 22);
+            allVMDataToolStripMenuItem.Text = "All VM data";
+            allVMDataToolStripMenuItem.Click += allVMDataToolStripMenuItem_Click;
             // 
             // MainForm
             // 
@@ -639,5 +648,6 @@
         private GroupBox groupBox2;
         private Button buttonManageServerMembers;
         private Label toolstripstatuslabelMain_CreatedBy;
+        private ToolStripMenuItem allVMDataToolStripMenuItem;
     }
 }

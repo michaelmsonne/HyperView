@@ -1230,5 +1230,394 @@ namespace HyperView
                     FileLogger.EventType.Error, 2085);
             }
         }
+
+        private void allVMDataToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                FileLogger.Message("User requested VM data export",
+                    FileLogger.EventType.Information, 2101);
+
+                // Check if there's an active Hyper-V connection
+                if (!SessionContext.IsSessionActive())
+                {
+                    MessageBox.Show("Please connect to a Hyper-V server first.",
+                        "Connection Required",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                // Check if we have VM data
+                if (datagridviewVMOverView == null || datagridviewVMOverView.Rows.Count == 0)
+                {
+                    MessageBox.Show("No VM data available. Please load VMs first.",
+                        "No Data",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                FileLogger.Message($"Export All VM Data requested - {datagridviewVMOverView.Rows.Count} VMs available",
+                    FileLogger.EventType.Information, 2102);
+
+                // Show SaveFileDialog with format options
+                using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+                {
+                    saveFileDialog.Title = "Export All VM Data";
+                    saveFileDialog.FileName = $"HyperV_AllVMData_{SessionContext.ServerName}_{DateTime.Now:yyyyMMdd_HHmmss}";
+                    saveFileDialog.Filter = "JSON Files (*.json)|*.json|CSV Files (*.csv)|*.csv|XML Files (*.xml)|*.xml|Text Files (*.txt)|*.txt|All Files (*.*)|*.*";
+                    saveFileDialog.FilterIndex = 1;
+                    saveFileDialog.RestoreDirectory = true;
+
+                    if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        string filePath = saveFileDialog.FileName;
+                        string fileExtension = System.IO.Path.GetExtension(filePath).ToLower();
+
+                        FileLogger.Message($"Exporting VM data to: {filePath} (Format: {fileExtension})",
+                            FileLogger.EventType.Information, 2103);
+
+                        // Show progress cursor
+                        this.Cursor = Cursors.WaitCursor;
+
+                        try
+                        {
+                            // Get VM Groups data
+                            var vmGroups = VMGroups.GetHyperVVMGroups(cmd => ExecutePowerShellCommand(cmd));
+
+                            // Export based on file extension
+                            bool success = false;
+                            switch (fileExtension)
+                            {
+                                case ".json":
+                                    success = ExportToJson(filePath, vmGroups);
+                                    break;
+
+                                case ".csv":
+                                    success = ExportToCsv(filePath, vmGroups);
+                                    break;
+
+                                case ".xml":
+                                    success = ExportToXml(filePath, vmGroups);
+                                    break;
+
+                                case ".txt":
+                                    success = ExportToText(filePath, vmGroups);
+                                    break;
+
+                                default:
+                                    success = ExportToJson(filePath, vmGroups);
+                                    break;
+                            }
+
+                            if (success)
+                            {
+                                FileLogger.Message($"VM data export completed successfully: {filePath}",
+                                    FileLogger.EventType.Information, 2104);
+
+                                // Show success message with option to open file location
+                                var result = MessageBox.Show(
+                                    $"VM data exported successfully to:\n{filePath}\n\nWould you like to open the file location?",
+                                    "Export Complete",
+                                    MessageBoxButtons.YesNo,
+                                    MessageBoxIcon.Information);
+
+                                if (result == DialogResult.Yes)
+                                {
+                                    try
+                                    {
+                                        System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{filePath}\"");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        FileLogger.Message($"Could not open file location: {ex.Message}",
+                                            FileLogger.EventType.Warning, 2105);
+                                    }
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            this.Cursor = Cursors.Default;
+                        }
+                    }
+                    else
+                    {
+                        FileLogger.Message("Export dialog cancelled by user",
+                            FileLogger.EventType.Information, 2106);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                string errorMsg = $"Error exporting VM data: {ex.Message}";
+                FileLogger.Message(errorMsg, FileLogger.EventType.Error, 2107);
+
+                MessageBox.Show(errorMsg,
+                    "Export Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private bool ExportToJson(string filePath, List<VMGroupInfo> vmGroups)
+        {
+            try
+            {
+                FileLogger.Message("Exporting as JSON format",
+                    FileLogger.EventType.Information, 2108);
+
+                var exportData = new
+                {
+                    ExportInfo = new
+                    {
+                        ExportDateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                        ExportedBy = Environment.UserName,
+                        HyperVHost = SessionContext.ServerName,
+                        ConnectionType = SessionContext.IsLocal ? "Local" : "Remote",
+                        TotalVMs = datagridviewVMOverView.Rows.Count,
+                        ApplicationVersion = "HyperView v1.0.0.0"
+                    },
+                    VMData = GetVMDataFromGrid(),
+                    VMGroups = vmGroups
+                };
+
+                string jsonData = System.Text.Json.JsonSerializer.Serialize(exportData, new System.Text.Json.JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+
+                System.IO.File.WriteAllText(filePath, jsonData, System.Text.Encoding.UTF8);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Error exporting to JSON: {ex.Message}",
+                    FileLogger.EventType.Error, 2109);
+                return false;
+            }
+        }
+
+        private bool ExportToCsv(string filePath, List<VMGroupInfo> vmGroups)
+        {
+            try
+            {
+                FileLogger.Message("Exporting as CSV format",
+                    FileLogger.EventType.Information, 2110);
+
+                var vmData = GetVMDataFromGrid();
+                var csv = new System.Text.StringBuilder();
+
+                // Write header
+                var headers = new List<string>();
+                foreach (DataGridViewColumn column in datagridviewVMOverView.Columns)
+                {
+                    headers.Add($"\"{column.HeaderText}\"");
+                }
+                csv.AppendLine(string.Join(",", headers));
+
+                // Write data rows
+                foreach (DataGridViewRow row in datagridviewVMOverView.Rows)
+                {
+                    var values = new List<string>();
+                    foreach (DataGridViewColumn column in datagridviewVMOverView.Columns)
+                    {
+                        var cellValue = row.Cells[column.Index].Value?.ToString() ?? "";
+                        values.Add($"\"{cellValue.Replace("\"", "\"\"")}\"");
+                    }
+                    csv.AppendLine(string.Join(",", values));
+                }
+
+                System.IO.File.WriteAllText(filePath, csv.ToString(), System.Text.Encoding.UTF8);
+
+                // Also create a separate CSV for VM Groups if available
+                if (vmGroups != null && vmGroups.Count > 0)
+                {
+                    string groupsCsvPath = filePath.Replace(".csv", "_VMGroups.csv");
+                    var groupsCsv = new System.Text.StringBuilder();
+
+                    groupsCsv.AppendLine("\"Group Name\",\"Group Type\",\"VM Count\",\"VM Members\",\"Computer Name\"");
+
+                    foreach (var group in vmGroups)
+                    {
+                        groupsCsv.AppendLine($"\"{group.Name}\",\"{group.GroupTypeDisplay}\",\"{group.VMCount}\",\"{group.VMList}\",\"{group.ComputerName}\"");
+                    }
+
+                    System.IO.File.WriteAllText(groupsCsvPath, groupsCsv.ToString(), System.Text.Encoding.UTF8);
+
+                    FileLogger.Message($"VM Groups data also exported to: {groupsCsvPath}",
+                        FileLogger.EventType.Information, 2111);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Error exporting to CSV: {ex.Message}",
+                    FileLogger.EventType.Error, 2112);
+                return false;
+            }
+        }
+
+        private bool ExportToXml(string filePath, List<VMGroupInfo> vmGroups)
+        {
+            try
+            {
+                FileLogger.Message("Exporting as XML format",
+                    FileLogger.EventType.Information, 2113);
+
+                var vmData = GetVMDataFromGrid();
+
+                using (var writer = System.Xml.XmlWriter.Create(filePath, new System.Xml.XmlWriterSettings
+                {
+                    Indent = true,
+                    Encoding = System.Text.Encoding.UTF8
+                }))
+                {
+                    writer.WriteStartDocument();
+                    writer.WriteStartElement("HyperVExport");
+
+                    // Export Info
+                    writer.WriteStartElement("ExportInfo");
+                    writer.WriteElementString("ExportDateTime", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                    writer.WriteElementString("ExportedBy", Environment.UserName);
+                    writer.WriteElementString("HyperVHost", SessionContext.ServerName);
+                    writer.WriteElementString("ConnectionType", SessionContext.IsLocal ? "Local" : "Remote");
+                    writer.WriteElementString("TotalVMs", datagridviewVMOverView.Rows.Count.ToString());
+                    writer.WriteEndElement();
+
+                    // VM Data
+                    writer.WriteStartElement("VMData");
+                    foreach (var vm in vmData)
+                    {
+                        writer.WriteStartElement("VM");
+                        foreach (var kvp in vm)
+                        {
+                            writer.WriteElementString(kvp.Key.Replace(" ", ""), kvp.Value);
+                        }
+                        writer.WriteEndElement();
+                    }
+                    writer.WriteEndElement();
+
+                    // VM Groups
+                    if (vmGroups != null && vmGroups.Count > 0)
+                    {
+                        writer.WriteStartElement("VMGroups");
+                        foreach (var group in vmGroups)
+                        {
+                            writer.WriteStartElement("VMGroup");
+                            writer.WriteElementString("Name", group.Name);
+                            writer.WriteElementString("GroupType", group.GroupTypeDisplay);
+                            writer.WriteElementString("VMCount", group.VMCount.ToString());
+                            writer.WriteElementString("VMMembers", group.VMList);
+                            writer.WriteEndElement();
+                        }
+                        writer.WriteEndElement();
+                    }
+
+                    writer.WriteEndElement();
+                    writer.WriteEndDocument();
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Error exporting to XML: {ex.Message}",
+                    FileLogger.EventType.Error, 2114);
+                return false;
+            }
+        }
+
+        private bool ExportToText(string filePath, List<VMGroupInfo> vmGroups)
+        {
+            try
+            {
+                FileLogger.Message("Exporting as formatted text",
+                    FileLogger.EventType.Information, 2115);
+
+                var vmData = GetVMDataFromGrid();
+                var textOutput = new List<string>();
+
+                textOutput.Add(new string('=', 80));
+                textOutput.Add("HYPERVIEW - ALL VM DATA EXPORT");
+                textOutput.Add(new string('=', 80));
+                textOutput.Add($"Export Date/Time: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                textOutput.Add($"Exported By: {Environment.UserName}");
+                textOutput.Add($"Hyper-V Host: {SessionContext.ServerName}");
+                textOutput.Add($"Connection Type: {(SessionContext.IsLocal ? "Local" : "Remote")}");
+                textOutput.Add($"Total VMs: {datagridviewVMOverView.Rows.Count}");
+                textOutput.Add("");
+
+                // VM Data
+                textOutput.Add("VIRTUAL MACHINES DATA");
+                textOutput.Add(new string('-', 80));
+
+                foreach (var vm in vmData)
+                {
+                    textOutput.Add("");
+                    foreach (var kvp in vm)
+                    {
+                        if (!string.IsNullOrEmpty(kvp.Value))
+                            textOutput.Add($"  {kvp.Key}: {kvp.Value}");
+                    }
+                }
+
+                // VM Groups Data
+                if (vmGroups != null && vmGroups.Count > 0)
+                {
+                    textOutput.Add("");
+                    textOutput.Add("");
+                    textOutput.Add("VM GROUPS DATA");
+                    textOutput.Add(new string('-', 80));
+
+                    foreach (var group in vmGroups)
+                    {
+                        textOutput.Add("");
+                        textOutput.Add($"Group Name: {group.Name}");
+                        textOutput.Add($"  Type: {group.GroupTypeDisplay}");
+                        textOutput.Add($"  VM Count: {group.VMCount}");
+                        textOutput.Add($"  VM Members: {group.VMList}");
+                    }
+                }
+
+                textOutput.Add("");
+                textOutput.Add(new string('=', 80));
+                textOutput.Add("END OF EXPORT");
+                textOutput.Add(new string('=', 80));
+
+                System.IO.File.WriteAllLines(filePath, textOutput, System.Text.Encoding.UTF8);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Error exporting to text: {ex.Message}",
+                    FileLogger.EventType.Error, 2116);
+                return false;
+            }
+        }
+
+        private List<Dictionary<string, string>> GetVMDataFromGrid()
+        {
+            var vmData = new List<Dictionary<string, string>>();
+
+            foreach (DataGridViewRow row in datagridviewVMOverView.Rows)
+            {
+                var vmInfo = new Dictionary<string, string>();
+
+                foreach (DataGridViewColumn column in datagridviewVMOverView.Columns)
+                {
+                    var value = row.Cells[column.Index].Value?.ToString() ?? "";
+                    vmInfo[column.HeaderText] = value;
+                }
+
+                vmData.Add(vmInfo);
+            }
+
+            return vmData;
+        }
     }
 }
