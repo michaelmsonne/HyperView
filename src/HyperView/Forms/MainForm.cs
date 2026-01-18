@@ -747,7 +747,7 @@ namespace HyperView
                             FileLogger.EventType.Information, 2030);
 
                         // Create the VM Group using PowerShell
-                        var createResult = CreateHyperVVMGroup(groupName, groupType);
+                        var createResult = VMGroups.CreateHyperVVMGroup(groupName, groupType, cmd => ExecutePowerShellCommand(cmd));
 
                         if (createResult.Success)
                         {
@@ -792,60 +792,6 @@ namespace HyperView
                     "Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
-            }
-        }
-
-        private class VMGroupCreationResult
-        {
-            public bool Success { get; set; }
-            public string Error { get; set; }
-        }
-
-        private VMGroupCreationResult CreateHyperVVMGroup(string groupName, string groupType)
-        {
-            try
-            {
-                FileLogger.Message($"Executing New-VMGroup command for '{groupName}'...",
-                    FileLogger.EventType.Information, 2035);
-
-                // Build PowerShell command
-                string command = $"New-VMGroup -Name '{groupName}' -GroupType {groupType}";
-
-                var results = ExecutePowerShellCommand(command);
-
-                if (results != null && results.Count > 0)
-                {
-                    FileLogger.Message($"VM Group '{groupName}' created successfully via PowerShell",
-                        FileLogger.EventType.Information, 2036);
-
-                    return new VMGroupCreationResult
-                    {
-                        Success = true
-                    };
-                }
-                else
-                {
-                    string error = "No results returned from New-VMGroup command";
-                    FileLogger.Message($"VM Group creation returned no results: {error}",
-                        FileLogger.EventType.Warning, 2037);
-
-                    return new VMGroupCreationResult
-                    {
-                        Success = false,
-                        Error = error
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                FileLogger.Message($"Exception creating VM Group: {ex.Message}",
-                    FileLogger.EventType.Error, 2038);
-
-                return new VMGroupCreationResult
-                {
-                    Success = false,
-                    Error = ex.Message
-                };
             }
         }
 
