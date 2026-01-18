@@ -33,6 +33,12 @@ namespace HyperView.Class
         public string Error { get; set; }
     }
 
+    public class VMGroupRenameResult
+    {
+        public bool Success { get; set; }
+        public string Error { get; set; }
+    }
+
     public static class VMGroups
     {
         public static List<VMGroupInfo> GetHyperVVMGroups(
@@ -399,6 +405,55 @@ namespace HyperView.Class
                     FileLogger.EventType.Error, 2038);
 
                 return new VMGroupCreationResult
+                {
+                    Success = false,
+                    Error = ex.Message
+                };
+            }
+        }
+
+        public static VMGroupRenameResult RenameHyperVVMGroup(
+            string oldGroupName,
+            string newGroupName,
+            Func<string, System.Collections.ObjectModel.Collection<PSObject>> executePowerShellCommand)
+        {
+            try
+            {
+                FileLogger.Message($"Renaming VM Group from '{oldGroupName}' to '{newGroupName}'...",
+                    FileLogger.EventType.Information, 2090);
+
+                // Build PowerShell command
+                string command = $"Rename-VMGroup -Name '{oldGroupName}' -NewName '{newGroupName}' -ErrorAction Stop";
+
+                var results = executePowerShellCommand(command);
+
+                if (results == null)
+                {
+                    string error = "Failed to rename VM Group. Check logs for details.";
+                    FileLogger.Message($"VM Group rename failed: {error}",
+                        FileLogger.EventType.Error, 2091);
+
+                    return new VMGroupRenameResult
+                    {
+                        Success = false,
+                        Error = error
+                    };
+                }
+
+                FileLogger.Message($"VM Group renamed successfully from '{oldGroupName}' to '{newGroupName}'",
+                    FileLogger.EventType.Information, 2092);
+
+                return new VMGroupRenameResult
+                {
+                    Success = true
+                };
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Exception renaming VM Group '{oldGroupName}': {ex.Message}",
+                    FileLogger.EventType.Error, 2093);
+
+                return new VMGroupRenameResult
                 {
                     Success = false,
                     Error = ex.Message

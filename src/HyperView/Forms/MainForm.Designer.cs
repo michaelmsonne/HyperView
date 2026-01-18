@@ -223,6 +223,7 @@
             buttonRenameSelectedVMGrou.TabIndex = 2;
             buttonRenameSelectedVMGrou.Text = "Rename selected VM group";
             buttonRenameSelectedVMGrou.UseVisualStyleBackColor = true;
+            buttonRenameSelectedVMGrou.Click += buttonRenameSelectedVMGrou_Click;
             // 
             // buttonDeleteSelectedVMGrou
             // 

@@ -954,6 +954,113 @@ namespace HyperView
             }
         }
 
+        private void buttonRenameSelectedVMGrou_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                FileLogger.Message("User initiated VM Group rename",
+                    FileLogger.EventType.Information, 2094);
+
+                // Check if there's an active Hyper-V connection
+                if (!SessionContext.IsSessionActive())
+                {
+                    MessageBox.Show("Please connect to a Hyper-V server first.",
+                        "Connection Required",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                // Get selected VM group
+                if (datagridviewVMGroups == null || datagridviewVMGroups.SelectedRows.Count == 0)
+                {
+                    MessageBox.Show("Please select a VM Group to rename.",
+                        "No Selection",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    return;
+                }
+
+                string currentGroupName = datagridviewVMGroups.SelectedRows[0].Cells["Group Name"].Value?.ToString();
+
+                if (string.IsNullOrEmpty(currentGroupName))
+                {
+                    MessageBox.Show("Invalid VM Group selection.",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                    return;
+                }
+
+                FileLogger.Message($"User selected VM Group '{currentGroupName}' for rename",
+                    FileLogger.EventType.Information, 2095);
+
+                // Show rename form
+                using (Forms.RenameVMGroupForm renameForm = new Forms.RenameVMGroupForm())
+                {
+                    renameForm.CurrentGroupName = currentGroupName;
+
+                    var result = renameForm.ShowDialog();
+
+                    if (result == DialogResult.OK && !string.IsNullOrEmpty(renameForm.NewGroupName))
+                    {
+                        string newGroupName = renameForm.NewGroupName;
+
+                        FileLogger.Message($"Renaming VM Group from '{currentGroupName}' to '{newGroupName}'...",
+                            FileLogger.EventType.Information, 2096);
+
+                        // Rename the VM Group using PowerShell
+                        var renameResult = VMGroups.RenameHyperVVMGroup(
+                            currentGroupName,
+                            newGroupName,
+                            cmd => ExecutePowerShellCommand(cmd));
+
+                        if (renameResult.Success)
+                        {
+                            FileLogger.Message($"VM Group renamed successfully from '{currentGroupName}' to '{newGroupName}'",
+                                FileLogger.EventType.Information, 2097);
+
+                            MessageBox.Show($"VM Group renamed successfully from '{currentGroupName}' to '{newGroupName}'.",
+                                "Group Renamed",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
+
+                            // Refresh VM Groups view
+                            VMGroups.RefreshVMGroupsView(
+                                $"Group renamed: {currentGroupName} -> {newGroupName}",
+                                cmd => ExecutePowerShellCommand(cmd),
+                                groups => UpdateVMGroupsDataGridView(groups));
+                        }
+                        else
+                        {
+                            FileLogger.Message($"Failed to rename VM Group '{currentGroupName}': {renameResult.Error}",
+                                FileLogger.EventType.Error, 2098);
+
+                            MessageBox.Show($"Failed to rename VM Group:\n\n{renameResult.Error}",
+                                "Error",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                        }
+                    }
+                    else
+                    {
+                        FileLogger.Message("VM Group rename cancelled",
+                            FileLogger.EventType.Information, 2099);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                string errorMsg = $"Error renaming VM Group: {ex.Message}";
+                FileLogger.Message(errorMsg, FileLogger.EventType.Error, 2100);
+
+                MessageBox.Show(errorMsg,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
         private void buttonLoadGroupsrefresh_Click(object sender, EventArgs e)
         {
             try
@@ -973,7 +1080,7 @@ namespace HyperView
 
                 // Show progress
                 this.Cursor = Cursors.WaitCursor;
-                
+
                 FileLogger.Message("Retrieving VM Groups from server...",
                     FileLogger.EventType.Information, 2057);
 
@@ -1061,7 +1168,7 @@ namespace HyperView
                     row["Group Name"] = group.Name;
                     row["Group Type"] = group.GroupTypeDisplay;
                     row["VM Count"] = group.VMCount.ToString();
-                    
+
                     // Truncate long VM lists
                     string vmMembers = group.VMList;
                     if (!string.IsNullOrEmpty(vmMembers) && vmMembers.Length > 100)
@@ -1069,9 +1176,9 @@ namespace HyperView
                         vmMembers = vmMembers.Substring(0, 100) + "...";
                     }
                     row["VM Members"] = vmMembers;
-                    
+
                     row["Computer Name"] = group.ComputerName;
-                    
+
                     dataTable.Rows.Add(row);
                 }
 
