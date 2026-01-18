@@ -231,9 +231,75 @@ namespace HyperView
 
                     row["Heartbeat"] = vm.Properties["Heartbeat"]?.Value?.ToString() ?? "";
 
-                    // Integration services version
-                    var integrationServicesVersion = vm.Properties["IntegrationServicesVersion"]?.Value;
-                    row["Integration Services"] = integrationServicesVersion?.ToString() ?? "";
+                    // Get integration services from VMIntegrationService property
+                    var integrationServices = vm.Properties["VMIntegrationService"]?.Value;
+                    if (integrationServices != null)
+                    {
+                        var allServicesList = new List<string>();
+                        
+                        // VMIntegrationService is a collection of service objects
+                        if (integrationServices is System.Collections.IEnumerable enumerable)
+                        {
+                            foreach (var service in enumerable)
+                            {
+                                if (service != null)
+                                {
+                                    // Try to get as PSObject
+                                    if (service is PSObject psService)
+                                    {
+                                        // Try to get Name property
+                                        var name = psService.Properties["Name"]?.Value?.ToString();
+                                        if (!string.IsNullOrEmpty(name))
+                                        {
+                                            // Shorten some service names for display
+                                            string displayName = name
+                                                .Replace("Guest Service Interface", "Guest Svc")
+                                                .Replace("Key-Value Pair Exchange", "KVP")
+                                                .Replace("Time Synchronization", "Time Sync");
+                                            
+                                            allServicesList.Add(displayName);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // If not PSObject, try ToString()
+                                        var serviceName = service.ToString();
+                                        if (!string.IsNullOrEmpty(serviceName) && serviceName != "System.Management.Automation.PSObject")
+                                        {
+                                            allServicesList.Add(serviceName);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Format the output - show count and service names
+                        if (allServicesList.Count > 0)
+                        {
+                            string displayText = $"{allServicesList.Count} services";
+                            
+                            // Show first 3 services
+                            var servicesToShow = allServicesList.Take(3).ToList();
+                            displayText += $" ({string.Join(", ", servicesToShow)}";
+                            
+                            if (allServicesList.Count > 3)
+                            {
+                                displayText += $", +{allServicesList.Count - 3}";
+                            }
+                            
+                            displayText += ")";
+                            
+                            row["Integration Services"] = displayText;
+                        }
+                        else
+                        {
+                            row["Integration Services"] = "No services found";
+                        }
+                    }
+                    else
+                    {
+                        row["Integration Services"] = "N/A";
+                    }
 
                     row["Auto Start"] = vm.Properties["AutomaticStartAction"]?.Value?.ToString() ?? "";
                     row["Auto Stop"] = vm.Properties["AutomaticStopAction"]?.Value?.ToString() ?? "";
