@@ -845,5 +845,413 @@ namespace HyperView
                 };
             }
         }
+
+        private void buttonDeleteSelectedVMGrou_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                FileLogger.Message("User initiated VM Group deletion",
+                    FileLogger.EventType.Information, 2039);
+
+                // Check if there's an active Hyper-V connection
+                if (!SessionContext.IsSessionActive())
+                {
+                    MessageBox.Show("Please connect to a Hyper-V server first.",
+                        "Connection Required",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                // Get selected VM group (assuming you have a datagridviewVMGroups control)
+                if (datagridviewVMGroups == null || datagridviewVMGroups.SelectedRows.Count == 0)
+                {
+                    MessageBox.Show("Please select a VM Group to delete.",
+                        "No Selection",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    return;
+                }
+
+                string selectedGroupName = datagridviewVMGroups.SelectedRows[0].Cells["Group Name"].Value?.ToString();
+
+                if (string.IsNullOrEmpty(selectedGroupName))
+                {
+                    MessageBox.Show("Invalid VM Group selection.",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                    return;
+                }
+
+                FileLogger.Message($"User selected VM Group '{selectedGroupName}' for deletion",
+                    FileLogger.EventType.Information, 2040);
+
+                // First confirmation
+                var confirmResult = MessageBox.Show(
+                    $"Are you sure you want to delete VM Group '{selectedGroupName}'?",
+                    "Confirm Deletion",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (confirmResult != DialogResult.Yes)
+                {
+                    FileLogger.Message("VM Group deletion cancelled by user",
+                        FileLogger.EventType.Information, 2041);
+                    return;
+                }
+
+                // Try to remove without force first
+                var result = RemoveHyperVVMGroup(selectedGroupName, false);
+
+                if (result.Success)
+                {
+                    FileLogger.Message($"VM Group '{selectedGroupName}' deleted successfully",
+                        FileLogger.EventType.Information, 2042);
+
+                    MessageBox.Show($"VM Group '{selectedGroupName}' deleted successfully.",
+                        "Success",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+
+                    // Refresh the VM Groups view
+                    // UpdateVMGroupsDataGridView();
+                }
+                else
+                {
+                    // Check if it's because the group contains VMs and can be forced
+                    if (result.CanForce)
+                    {
+                        FileLogger.Message($"VM Group '{selectedGroupName}' contains {result.VMCount} VM(s), asking for force deletion",
+                            FileLogger.EventType.Information, 2043);
+
+                        string vmList = string.Join("\n• ", result.VMNames);
+                        string forceMessage = $"VM Group '{selectedGroupName}' contains {result.VMCount} VM(s):\n\n• {vmList}\n\n" +
+                                            "The VMs will remain but will be removed from this group.\n\n" +
+                                            "Do you want to force delete the VM Group anyway?";
+
+                        var forceResult = MessageBox.Show(forceMessage,
+                            "Force Delete VM Group?",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Exclamation);
+
+                        if (forceResult == DialogResult.Yes)
+                        {
+                            FileLogger.Message($"User confirmed force deletion of VM Group '{selectedGroupName}'",
+                                FileLogger.EventType.Information, 2044);
+
+                            // Try again with force
+                            var forceDeleteResult = RemoveHyperVVMGroup(selectedGroupName, true);
+
+                            if (forceDeleteResult.Success)
+                            {
+                                FileLogger.Message($"VM Group '{selectedGroupName}' force deleted successfully",
+                                    FileLogger.EventType.Information, 2045);
+
+                                MessageBox.Show($"VM Group '{selectedGroupName}' force deleted successfully. " +
+                                              "The VMs remain but are no longer part of this group.",
+                                    "Success",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Information);
+
+                                // Refresh the VM Groups view
+                                // UpdateVMGroupsDataGridView();
+                            }
+                            else
+                            {
+                                FileLogger.Message($"Failed to force delete VM Group '{selectedGroupName}': {forceDeleteResult.Error}",
+                                    FileLogger.EventType.Error, 2046);
+
+                                MessageBox.Show($"Failed to force delete VM Group:\n\n{forceDeleteResult.Error}",
+                                    "Error",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Error);
+                            }
+                        }
+                        else
+                        {
+                            FileLogger.Message("User cancelled force deletion",
+                                FileLogger.EventType.Information, 2047);
+                        }
+                    }
+                    else
+                    {
+                        // Other error
+                        FileLogger.Message($"Failed to delete VM Group '{selectedGroupName}': {result.Error}",
+                            FileLogger.EventType.Error, 2048);
+
+                        MessageBox.Show($"Failed to delete VM Group:\n\n{result.Error}",
+                            "Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                string errorMsg = $"Error deleting VM Group: {ex.Message}";
+                FileLogger.Message(errorMsg, FileLogger.EventType.Error, 2049);
+
+                MessageBox.Show(errorMsg,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private class VMGroupDeletionResult
+        {
+            public bool Success { get; set; }
+            public string Error { get; set; }
+            public bool CanForce { get; set; }
+            public int VMCount { get; set; }
+            public List<string> VMNames { get; set; } = new List<string>();
+        }
+
+        private VMGroupDeletionResult RemoveHyperVVMGroup(string groupName, bool force)
+        {
+            try
+            {
+                FileLogger.Message($"Attempting to remove VM Group '{groupName}' (Force: {force})...",
+                    FileLogger.EventType.Information, 2050);
+
+                // First, check if the group has VMs
+                var checkCommand = $"$group = Get-VMGroup -Name '{groupName}' -ErrorAction Stop; " +
+                                 $"$vmMembers = $group.VMMembers; " +
+                                 $"@{{ VMCount = $vmMembers.Count; VMNames = $vmMembers.Name }}";
+
+                var checkResults = ExecutePowerShellCommand(checkCommand);
+
+                int vmCount = 0;
+                List<string> vmNames = new List<string>();
+
+                if (checkResults != null && checkResults.Count > 0)
+                {
+                    var result = checkResults[0];
+                    if (result.BaseObject is System.Collections.Hashtable hashtable)
+                    {
+                        vmCount = Convert.ToInt32(hashtable["VMCount"] ?? 0);
+
+                        if (hashtable["VMNames"] != null)
+                        {
+                            if (hashtable["VMNames"] is System.Collections.IEnumerable enumerable)
+                            {
+                                foreach (var item in enumerable)
+                                {
+                                    if (item != null)
+                                        vmNames.Add(item.ToString());
+                                }
+                            }
+                        }
+                    }
+                }
+
+                FileLogger.Message($"VM Group '{groupName}' contains {vmCount} VM(s)",
+                    FileLogger.EventType.Information, 2051);
+
+                // Build Remove-VMGroup command
+                string removeCommand = force
+                    ? $"Remove-VMGroup -Name '{groupName}' -Force -ErrorAction Stop"
+                    : $"Remove-VMGroup -Name '{groupName}' -ErrorAction Stop";
+
+                var removeResults = ExecutePowerShellCommand(removeCommand);
+
+                // Check if command had errors
+                // Note: ExecutePowerShellCommand returns null if there were errors
+                if (removeResults == null && !force && vmCount > 0)
+                {
+                    // Failed because group contains VMs - can force
+                    FileLogger.Message($"VM Group '{groupName}' removal failed - group contains VMs, force deletion available",
+                        FileLogger.EventType.Warning, 2052);
+
+                    return new VMGroupDeletionResult
+                    {
+                        Success = false,
+                        Error = $"VM Group contains {vmCount} VM(s) and cannot be deleted without force.",
+                        CanForce = true,
+                        VMCount = vmCount,
+                        VMNames = vmNames
+                    };
+                }
+                else if (removeResults == null)
+                {
+                    // Other error
+                    string error = "Failed to remove VM Group. Check logs for details.";
+                    FileLogger.Message($"VM Group '{groupName}' removal failed: {error}",
+                        FileLogger.EventType.Error, 2053);
+
+                    return new VMGroupDeletionResult
+                    {
+                        Success = false,
+                        Error = error,
+                        CanForce = false
+                    };
+                }
+
+                // Success
+                FileLogger.Message($"VM Group '{groupName}' removed successfully via PowerShell",
+                    FileLogger.EventType.Information, 2054);
+
+                return new VMGroupDeletionResult
+                {
+                    Success = true
+                };
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Exception removing VM Group '{groupName}': {ex.Message}",
+                    FileLogger.EventType.Error, 2055);
+
+                return new VMGroupDeletionResult
+                {
+                    Success = false,
+                    Error = ex.Message,
+                    CanForce = false
+                };
+            }
+        }
+
+        private void buttonLoadGroupsrefresh_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                FileLogger.Message("User requested VM Groups refresh",
+                    FileLogger.EventType.Information, 2056);
+
+                // Check if there's an active Hyper-V connection
+                if (!SessionContext.IsSessionActive())
+                {
+                    MessageBox.Show("Please connect to a Hyper-V server first.",
+                        "Connection Required",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                // Show progress
+                this.Cursor = Cursors.WaitCursor;
+                
+                FileLogger.Message("Retrieving VM Groups from server...",
+                    FileLogger.EventType.Information, 2057);
+
+                // Get VM Groups
+                var vmGroups = VMGroups.GetHyperVVMGroups(cmd => ExecutePowerShellCommand(cmd));
+
+                if (vmGroups != null)
+                {
+                    FileLogger.Message($"Retrieved {vmGroups.Count} VM Groups, updating DataGridView",
+                        FileLogger.EventType.Information, 2058);
+
+                    // Update DataGridView
+                    UpdateVMGroupsDataGridView(vmGroups);
+
+                    MessageBox.Show($"VM Groups refreshed successfully.\n\nFound {vmGroups.Count} group(s).",
+                        "Refresh Complete",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+                else
+                {
+                    FileLogger.Message("No VM Groups retrieved",
+                        FileLogger.EventType.Warning, 2059);
+
+                    MessageBox.Show("No VM Groups found or error retrieving groups.",
+                        "Refresh Complete",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                string errorMsg = $"Error refreshing VM Groups: {ex.Message}";
+                FileLogger.Message(errorMsg, FileLogger.EventType.Error, 2060);
+
+                MessageBox.Show(errorMsg,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+            finally
+            {
+                this.Cursor = Cursors.Default;
+            }
+        }
+
+        private void UpdateVMGroupsDataGridView(List<VMGroupInfo> vmGroups)
+        {
+            try
+            {
+                if (datagridviewVMGroups == null)
+                {
+                    FileLogger.Message("datagridviewVMGroups control not found",
+                        FileLogger.EventType.Warning, 2067);
+                    return;
+                }
+
+                FileLogger.Message($"Updating VM Groups DataGridView with {vmGroups.Count} groups",
+                    FileLogger.EventType.Information, 2068);
+
+                // Clear existing data
+                datagridviewVMGroups.DataSource = null;
+                datagridviewVMGroups.Rows.Clear();
+                datagridviewVMGroups.Columns.Clear();
+
+                if (vmGroups == null || vmGroups.Count == 0)
+                {
+                    FileLogger.Message("No VM Groups to display",
+                        FileLogger.EventType.Information, 2069);
+                    return;
+                }
+
+                // Create DataTable
+                var dataTable = new DataTable();
+                dataTable.Columns.Add("Group Name", typeof(string));
+                dataTable.Columns.Add("Group Type", typeof(string));
+                dataTable.Columns.Add("VM Count", typeof(string));
+                dataTable.Columns.Add("VM Members", typeof(string));
+                dataTable.Columns.Add("Computer Name", typeof(string));
+
+                // Add rows
+                foreach (var group in vmGroups)
+                {
+                    var row = dataTable.NewRow();
+                    row["Group Name"] = group.Name;
+                    row["Group Type"] = group.GroupTypeDisplay;
+                    row["VM Count"] = group.VMCount.ToString();
+                    
+                    // Truncate long VM lists
+                    string vmMembers = group.VMList;
+                    if (!string.IsNullOrEmpty(vmMembers) && vmMembers.Length > 100)
+                    {
+                        vmMembers = vmMembers.Substring(0, 100) + "...";
+                    }
+                    row["VM Members"] = vmMembers;
+                    
+                    row["Computer Name"] = group.ComputerName;
+                    
+                    dataTable.Rows.Add(row);
+                }
+
+                // Bind to DataGridView
+                datagridviewVMGroups.DataSource = dataTable;
+
+                // Configure DataGridView properties
+                datagridviewVMGroups.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+                datagridviewVMGroups.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                datagridviewVMGroups.MultiSelect = false;
+                datagridviewVMGroups.ReadOnly = true;
+                datagridviewVMGroups.AllowUserToAddRows = false;
+                datagridviewVMGroups.AllowUserToDeleteRows = false;
+                datagridviewVMGroups.RowHeadersVisible = false;
+
+                FileLogger.Message($"VM Groups DataGridView updated successfully with {vmGroups.Count} groups",
+                    FileLogger.EventType.Information, 2070);
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Error updating VM Groups DataGridView: {ex.Message}",
+                    FileLogger.EventType.Error, 2071);
+            }
+        }
     }
 }

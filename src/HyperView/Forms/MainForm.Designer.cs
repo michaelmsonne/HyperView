@@ -232,6 +232,7 @@
             buttonDeleteSelectedVMGrou.TabIndex = 1;
             buttonDeleteSelectedVMGrou.Text = "Delete selected VM group";
             buttonDeleteSelectedVMGrou.UseVisualStyleBackColor = true;
+            buttonDeleteSelectedVMGrou.Click += buttonDeleteSelectedVMGrou_Click;
             // 
             // buttonCreateANewVMGroup
             // 
@@ -251,6 +252,7 @@
             buttonLoadGroupsrefresh.TabIndex = 3;
             buttonLoadGroupsrefresh.Text = "&Load Groups/refresh";
             buttonLoadGroupsrefresh.UseVisualStyleBackColor = true;
+            buttonLoadGroupsrefresh.Click += buttonLoadGroupsrefresh_Click;
             // 
             // labelThisViewProvidesOver
             // 
