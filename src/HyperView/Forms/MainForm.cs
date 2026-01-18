@@ -253,7 +253,7 @@ namespace HyperView
                     }
                     else
                     {
-                        row["VM Groups"] = "";
+                        row["VM Groups"] = "N/A";
                     }
 
                     row["Checkpoint Type"] = vm.Properties["CheckpointType"]?.Value?.ToString() ?? "";
@@ -1993,7 +1993,7 @@ namespace HyperView
                     MessageBoxIcon.Information);
 
                 // Update window title with latest connection info
-                this.Text = $"{Globals.ToolName.HyperView} - Connected to {SessionContext.ServerName} ({SessionContext.ConnectionType}) - {totalVMs} VMs";
+                //this.Text = $"{Globals.ToolName.HyperView} - Connected to {SessionContext.ServerName} ({SessionContext.ConnectionType}) - {totalVMs} VMs";
             }
             catch (Exception ex)
             {
