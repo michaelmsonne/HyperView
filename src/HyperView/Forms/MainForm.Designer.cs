@@ -72,6 +72,7 @@
             downloadLastestReleaseFromGitHubToolStripMenuItem = new ToolStripMenuItem();
             changelogToolStripMenuItem = new ToolStripMenuItem();
             exportDataToolStripMenuItem = new ToolStripMenuItem();
+            allVMDataToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
             exitToolStripMenuItem = new ToolStripMenuItem();
             pictureboxSupportMe = new PictureBox();
@@ -80,7 +81,6 @@
             toolStripStatusLabelTextMainForm = new ToolStripStatusLabel();
             groupBoxMainFormServerDetails = new GroupBox();
             toolstripstatuslabelMain_CreatedBy = new Label();
-            allVMDataToolStripMenuItem = new ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)datagridviewVMOverView).BeginInit();
             tabcontrolMainForm.SuspendLayout();
             tabpagehvOverview.SuspendLayout();
@@ -228,22 +228,24 @@
             // 
             // buttonDeleteSelectedVMGrou
             // 
+            buttonDeleteSelectedVMGrou.BackColor = Color.LightCoral;
             buttonDeleteSelectedVMGrou.Location = new Point(6, 71);
             buttonDeleteSelectedVMGrou.Name = "buttonDeleteSelectedVMGrou";
             buttonDeleteSelectedVMGrou.Size = new Size(188, 43);
             buttonDeleteSelectedVMGrou.TabIndex = 1;
             buttonDeleteSelectedVMGrou.Text = "Delete selected VM group";
-            buttonDeleteSelectedVMGrou.UseVisualStyleBackColor = true;
+            buttonDeleteSelectedVMGrou.UseVisualStyleBackColor = false;
             buttonDeleteSelectedVMGrou.Click += buttonDeleteSelectedVMGrou_Click;
             // 
             // buttonCreateANewVMGroup
             // 
+            buttonCreateANewVMGroup.BackColor = Color.LightGreen;
             buttonCreateANewVMGroup.Location = new Point(6, 22);
             buttonCreateANewVMGroup.Name = "buttonCreateANewVMGroup";
             buttonCreateANewVMGroup.Size = new Size(188, 43);
             buttonCreateANewVMGroup.TabIndex = 0;
             buttonCreateANewVMGroup.Text = "Create a new VM Group";
-            buttonCreateANewVMGroup.UseVisualStyleBackColor = true;
+            buttonCreateANewVMGroup.UseVisualStyleBackColor = false;
             buttonCreateANewVMGroup.Click += buttonCreateANewVMGroup_Click;
             // 
             // buttonLoadGroupsrefresh
@@ -485,6 +487,13 @@
             exportDataToolStripMenuItem.Size = new Size(273, 22);
             exportDataToolStripMenuItem.Text = "Export data";
             // 
+            // allVMDataToolStripMenuItem
+            // 
+            allVMDataToolStripMenuItem.Name = "allVMDataToolStripMenuItem";
+            allVMDataToolStripMenuItem.Size = new Size(180, 22);
+            allVMDataToolStripMenuItem.Text = "All VM data";
+            allVMDataToolStripMenuItem.Click += allVMDataToolStripMenuItem_Click;
+            // 
             // aboutToolStripMenuItem
             // 
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
@@ -552,13 +561,6 @@
             toolstripstatuslabelMain_CreatedBy.Size = new Size(190, 15);
             toolstripstatuslabelMain_CreatedBy.TabIndex = 4;
             toolstripstatuslabelMain_CreatedBy.Text = "Created by: Michael Morten Sonne";
-            // 
-            // allVMDataToolStripMenuItem
-            // 
-            allVMDataToolStripMenuItem.Name = "allVMDataToolStripMenuItem";
-            allVMDataToolStripMenuItem.Size = new Size(180, 22);
-            allVMDataToolStripMenuItem.Text = "All VM data";
-            allVMDataToolStripMenuItem.Click += allVMDataToolStripMenuItem_Click;
             // 
             // MainForm
             // 

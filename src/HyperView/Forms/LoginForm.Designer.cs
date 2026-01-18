@@ -85,7 +85,7 @@
             // 
             textboxServer.Location = new Point(110, 167);
             textboxServer.Name = "textboxServer";
-            textboxServer.Size = new Size(271, 23);
+            textboxServer.Size = new Size(280, 23);
             textboxServer.TabIndex = 3;
             textboxServer.TextChanged += textboxServer_TextChanged;
             textboxServer.KeyDown += TextboxServer_KeyDown;
@@ -207,10 +207,11 @@
             // 
             // buttonHelpConnectGuide
             // 
-            buttonHelpConnectGuide.Location = new Point(387, 167);
+            buttonHelpConnectGuide.Location = new Point(396, 167);
             buttonHelpConnectGuide.Name = "buttonHelpConnectGuide";
-            buttonHelpConnectGuide.Size = new Size(36, 23);
+            buttonHelpConnectGuide.Size = new Size(23, 23);
             buttonHelpConnectGuide.TabIndex = 5;
+            buttonHelpConnectGuide.Text = "?";
             buttonHelpConnectGuide.UseVisualStyleBackColor = true;
             buttonHelpConnectGuide.Click += buttonHelpConnectGuide_Click;
             // 
