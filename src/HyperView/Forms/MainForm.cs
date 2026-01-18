@@ -535,7 +535,7 @@ namespace HyperView
 
                     if (enabledServicesList.Count > 0)
                     {
-                        // Show first 3 enabled services
+                        /* Show first 3 enabled services
                         var servicesToShow = enabledServicesList.Take(3).ToList();
                         displayText += $" ({string.Join(", ", servicesToShow)}";
 
@@ -544,7 +544,10 @@ namespace HyperView
                             displayText += $", +{enabledServicesList.Count - 3}";
                         }
 
-                        displayText += ")";
+                        displayText += ")";*/
+
+                        // Show all enabled services
+                        displayText += $" ({string.Join(", ", enabledServicesList)})";
                     }
                     else
                     {
