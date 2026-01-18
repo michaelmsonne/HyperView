@@ -455,7 +455,7 @@ namespace HyperView
                     return string.Join(", ", results.Select(g => g.ToString()));
                 }
 
-                return "";
+                return "N/A";
             }
             catch
             {
@@ -2140,6 +2140,92 @@ VM Groups:
 
                 string errorMsg = $"Error generating VM summary: {ex.Message}";
                 Message(errorMsg, EventType.Error, 2158);
+
+                MessageBox.Show(errorMsg,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private void datagridviewVMOverView_CellContentDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            try
+            {
+                // Check if a valid row was clicked (not header)
+                if (e.RowIndex < 0)
+                    return;
+
+                Message($"User double-clicked VM row at index {e.RowIndex}",
+                    EventType.Information, 2159);
+
+                // Get the selected row
+                DataGridViewRow selectedRow = datagridviewVMOverView.Rows[e.RowIndex];
+
+                // Extract VM data from the row
+                string vmName = selectedRow.Cells["VM Name"].Value?.ToString() ?? "";
+                
+                if (string.IsNullOrEmpty(vmName))
+                {
+                    MessageBox.Show("Could not retrieve VM name.",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+
+                Message($"Showing details for VM: {vmName}",
+                    EventType.Information, 2160);
+
+                // Build detailed information string
+                string details = $@"VM Details - {vmName}
+
+Basic Information:
+• Name: {vmName}
+• State: {selectedRow.Cells["State"].Value}
+• Generation: {selectedRow.Cells["Generation"].Value}
+• Created: {selectedRow.Cells["Created"].Value}
+• Is Clustered: {selectedRow.Cells["Is Clustered"].Value}
+
+Performance & Health:
+• CPU Count: {selectedRow.Cells["CPU Count"].Value}
+• CPU Usage: {selectedRow.Cells["CPU Usage %"].Value}%
+• Memory Assigned: {selectedRow.Cells["Memory Assigned (MB)"].Value} MB
+• Memory Demand: {selectedRow.Cells["Memory Demand (MB)"].Value} MB
+• Memory Startup: {selectedRow.Cells["Memory Startup (MB)"].Value} MB
+• Dynamic Memory: {selectedRow.Cells["Dynamic Memory"].Value}
+• Heartbeat: {selectedRow.Cells["Heartbeat"].Value}
+
+Storage & Network:
+• Total Disk Space: {selectedRow.Cells["Total Disk (GB)"].Value} GB
+• Network Adapters: {selectedRow.Cells["Network Adapters"].Value}
+
+Automation & Backup:
+• Auto Start: {selectedRow.Cells["Auto Start"].Value}
+• Auto Stop: {selectedRow.Cells["Auto Stop"].Value}
+• Checkpoint Type: {selectedRow.Cells["Checkpoint Type"].Value}
+• Checkpoints: {selectedRow.Cells["Checkpoints"].Value}
+• Replication: {selectedRow.Cells["Replication"].Value}
+
+Management:
+• Integration Services: {selectedRow.Cells["Integration Services"].Value}
+• VM Group(s): {selectedRow.Cells["VM Groups"].Value}
+• Categories: {selectedRow.Cells["Categories"].Value}
+• Uptime: {selectedRow.Cells["Uptime"].Value}";
+
+                Message($"Displaying VM details dialog for {vmName}",
+                    EventType.Information, 2161);
+
+                // Show details in a message box
+                MessageBox.Show(details,
+                    "VM Details",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                string errorMsg = $"Error showing VM details: {ex.Message}";
+                Message(errorMsg, EventType.Error, 2162);
 
                 MessageBox.Show(errorMsg,
                     "Error",
