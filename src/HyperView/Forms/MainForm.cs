@@ -578,7 +578,7 @@ namespace HyperView
         {
             try
             {
-                FileLogger.Message("User initiated disconnect from Hyper-V",
+                FileLogger.Message($"User initiated disconnect from '{SessionContext.ServerName}'",
                     FileLogger.EventType.Information, 2017);
 
                 // Check if there's an active connection
