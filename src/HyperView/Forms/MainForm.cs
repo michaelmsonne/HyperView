@@ -684,7 +684,7 @@ namespace HyperView
                             // Authentication failed or cancelled - close application
                             FileLogger.Message("Authentication cancelled after disconnect - closing application",
                                 FileLogger.EventType.Information, 2026);
-                            
+
                             this.DialogResult = DialogResult.Cancel;
                             this.Close();
                         }
@@ -713,6 +713,136 @@ namespace HyperView
 
                 // Show the form again if it was hidden
                 this.Show();
+            }
+        }
+
+        private void buttonCreateANewVMGroup_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                FileLogger.Message("User initiated VM Group creation",
+                    FileLogger.EventType.Information, 2029);
+
+                // Check if there's an active Hyper-V connection
+                if (!SessionContext.IsSessionActive())
+                {
+                    MessageBox.Show("Please connect to a Hyper-V server first.",
+                        "Connection Required",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                // Show the CreateVMGroupForm
+                using (Forms.CreateVMGroupForm createGroupForm = new Forms.CreateVMGroupForm())
+                {
+                    var result = createGroupForm.ShowDialog();
+
+                    if (result == DialogResult.OK && createGroupForm.Result != null)
+                    {
+                        string groupName = createGroupForm.Result.GroupName;
+                        string groupType = createGroupForm.Result.GroupType;
+
+                        FileLogger.Message($"Creating VM Group '{groupName}' of type '{groupType}'...",
+                            FileLogger.EventType.Information, 2030);
+
+                        // Create the VM Group using PowerShell
+                        var createResult = CreateHyperVVMGroup(groupName, groupType);
+
+                        if (createResult.Success)
+                        {
+                            FileLogger.Message($"VM Group '{groupName}' created successfully",
+                                FileLogger.EventType.Information, 2031);
+
+                            MessageBox.Show($"VM Group '{groupName}' created successfully.",
+                                "Group Created",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
+
+                            // Refresh VM Groups view (if you have a method/control for this)
+                            // UpdateVMGroupsDataGridView();
+                        }
+                        else
+                        {
+                            FileLogger.Message($"Failed to create VM Group '{groupName}': {createResult.Error}",
+                                FileLogger.EventType.Error, 2032);
+
+                            MessageBox.Show($"Failed to create VM Group:\n\n{createResult.Error}",
+                                "Error",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                        }
+                    }
+                    else
+                    {
+                        FileLogger.Message("VM Group creation cancelled",
+                            FileLogger.EventType.Information, 2033);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                string errorMsg = $"Error creating VM Group: {ex.Message}";
+                FileLogger.Message(errorMsg, FileLogger.EventType.Error, 2034);
+
+                MessageBox.Show(errorMsg,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private class VMGroupCreationResult
+        {
+            public bool Success { get; set; }
+            public string Error { get; set; }
+        }
+
+        private VMGroupCreationResult CreateHyperVVMGroup(string groupName, string groupType)
+        {
+            try
+            {
+                FileLogger.Message($"Executing New-VMGroup command for '{groupName}'...",
+                    FileLogger.EventType.Information, 2035);
+
+                // Build PowerShell command
+                string command = $"New-VMGroup -Name '{groupName}' -GroupType {groupType}";
+
+                var results = ExecutePowerShellCommand(command);
+
+                if (results != null && results.Count > 0)
+                {
+                    FileLogger.Message($"VM Group '{groupName}' created successfully via PowerShell",
+                        FileLogger.EventType.Information, 2036);
+
+                    return new VMGroupCreationResult
+                    {
+                        Success = true
+                    };
+                }
+                else
+                {
+                    string error = "No results returned from New-VMGroup command";
+                    FileLogger.Message($"VM Group creation returned no results: {error}",
+                        FileLogger.EventType.Warning, 2037);
+
+                    return new VMGroupCreationResult
+                    {
+                        Success = false,
+                        Error = error
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Exception creating VM Group: {ex.Message}",
+                    FileLogger.EventType.Error, 2038);
+
+                return new VMGroupCreationResult
+                {
+                    Success = false,
+                    Error = ex.Message
+                };
             }
         }
     }

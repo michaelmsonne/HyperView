@@ -241,6 +241,7 @@
             buttonCreateANewVMGroup.TabIndex = 0;
             buttonCreateANewVMGroup.Text = "Create a new VM Group";
             buttonCreateANewVMGroup.UseVisualStyleBackColor = true;
+            buttonCreateANewVMGroup.Click += buttonCreateANewVMGroup_Click;
             // 
             // buttonLoadGroupsrefresh
             // 
