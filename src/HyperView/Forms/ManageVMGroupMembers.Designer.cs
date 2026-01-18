@@ -43,47 +43,49 @@
             labelThisViewProvidesOver.AutoSize = true;
             labelThisViewProvidesOver.Location = new Point(12, 9);
             labelThisViewProvidesOver.Name = "labelThisViewProvidesOver";
-            labelThisViewProvidesOver.Size = new Size(765, 30);
+            labelThisViewProvidesOver.Size = new Size(700, 30);
             labelThisViewProvidesOver.TabIndex = 0;
-            labelThisViewProvidesOver.Text = "This view provides overview and functionality within Hyper-V for management of VM Group membership for VMs that is tagged for VM Groups.\r\nYou can add and remove members.";
+            labelThisViewProvidesOver.Text = "This view provides overview and functionality within Hyper-V for management of VM Group membership for VMs that is tagged for\r\nVM Groups. You can add and remove members.";
             // 
             // labelAvailable
             // 
             labelAvailable.AutoSize = true;
-            labelAvailable.Location = new Point(149, 71);
+            labelAvailable.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            labelAvailable.Location = new Point(149, 45);
             labelAvailable.Name = "labelAvailable";
-            labelAvailable.Size = new Size(84, 15);
+            labelAvailable.Size = new Size(87, 15);
             labelAvailable.TabIndex = 1;
             labelAvailable.Text = "Available VMs:";
             // 
             // labelMembers
             // 
             labelMembers.AutoSize = true;
-            labelMembers.Location = new Point(507, 71);
+            labelMembers.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            labelMembers.Location = new Point(507, 45);
             labelMembers.Name = "labelMembers";
-            labelMembers.Size = new Size(96, 15);
+            labelMembers.Size = new Size(101, 15);
             labelMembers.TabIndex = 2;
             labelMembers.Text = "Group Members:";
             // 
             // listboxAvailable
             // 
             listboxAvailable.FormattingEnabled = true;
-            listboxAvailable.Location = new Point(12, 89);
+            listboxAvailable.Location = new Point(12, 67);
             listboxAvailable.Name = "listboxAvailable";
-            listboxAvailable.Size = new Size(357, 274);
+            listboxAvailable.Size = new Size(357, 304);
             listboxAvailable.TabIndex = 3;
             // 
             // listboxMembers
             // 
             listboxMembers.FormattingEnabled = true;
-            listboxMembers.Location = new Point(375, 89);
+            listboxMembers.Location = new Point(375, 67);
             listboxMembers.Name = "listboxMembers";
-            listboxMembers.Size = new Size(357, 274);
+            listboxMembers.Size = new Size(357, 304);
             listboxMembers.TabIndex = 4;
             // 
             // buttonAdd
             // 
-            buttonAdd.Location = new Point(149, 369);
+            buttonAdd.Location = new Point(161, 377);
             buttonAdd.Name = "buttonAdd";
             buttonAdd.Size = new Size(75, 23);
             buttonAdd.TabIndex = 5;
@@ -93,7 +95,7 @@
             // 
             // buttonClose
             // 
-            buttonClose.Location = new Point(332, 369);
+            buttonClose.Location = new Point(333, 377);
             buttonClose.Name = "buttonClose";
             buttonClose.Size = new Size(75, 23);
             buttonClose.TabIndex = 6;
@@ -103,7 +105,7 @@
             // 
             // buttonRemove
             // 
-            buttonRemove.Location = new Point(507, 369);
+            buttonRemove.Location = new Point(507, 377);
             buttonRemove.Name = "buttonRemove";
             buttonRemove.Size = new Size(75, 23);
             buttonRemove.TabIndex = 7;
@@ -115,7 +117,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(783, 402);
+            ClientSize = new Size(745, 410);
             Controls.Add(buttonRemove);
             Controls.Add(buttonClose);
             Controls.Add(buttonAdd);
