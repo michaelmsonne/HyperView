@@ -314,5 +314,39 @@ namespace HyperView.Class
                 };
             }
         }
+
+        public static void RefreshVMGroupsView(
+            string reason,
+            Func<string, System.Collections.ObjectModel.Collection<PSObject>> executePowerShellCommand,
+            Action<List<VMGroupInfo>> updateDataGridView)
+        {
+            try
+            {
+                FileLogger.Message($"Refreshing VM Groups view - Reason: {reason}",
+                    FileLogger.EventType.Information, 2079);
+
+                // Get fresh VM Groups data
+                var vmGroups = GetHyperVVMGroups(executePowerShellCommand);
+
+                if (vmGroups != null && updateDataGridView != null)
+                {
+                    FileLogger.Message($"VM Groups view refreshed with {vmGroups.Count} groups",
+                        FileLogger.EventType.Information, 2080);
+                    
+                    // Update the DataGridView
+                    updateDataGridView(vmGroups);
+                }
+                else
+                {
+                    FileLogger.Message("DataGridView update callback not available",
+                        FileLogger.EventType.Information, 2081);
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Failed to refresh VM Groups view: {ex.Message}",
+                    FileLogger.EventType.Warning, 2082);
+            }
+        }
     }
 }

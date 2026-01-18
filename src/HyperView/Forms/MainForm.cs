@@ -759,8 +759,11 @@ namespace HyperView
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Information);
 
-                            // Refresh VM Groups view (if you have a method/control for this)
-                            // UpdateVMGroupsDataGridView();
+                            // Refresh VM Groups view
+                            VMGroups.RefreshVMGroupsView(
+                                $"New group created: {groupName}",
+                                cmd => ExecutePowerShellCommand(cmd),
+                                groups => UpdateVMGroupsDataGridView(groups));
                         }
                         else
                         {
@@ -915,7 +918,10 @@ namespace HyperView
                         MessageBoxIcon.Information);
 
                     // Refresh the VM Groups view
-                    // UpdateVMGroupsDataGridView();
+                    VMGroups.RefreshVMGroupsView(
+                        $"Group deleted: {selectedGroupName}",
+                        cmd => ExecutePowerShellCommand(cmd),
+                        groups => UpdateVMGroupsDataGridView(groups));
                 }
                 else
                 {
@@ -955,7 +961,10 @@ namespace HyperView
                                     MessageBoxIcon.Information);
 
                                 // Refresh the VM Groups view
-                                // UpdateVMGroupsDataGridView();
+                                VMGroups.RefreshVMGroupsView(
+                                    $"Group force deleted: {selectedGroupName}",
+                                    cmd => ExecutePowerShellCommand(cmd),
+                                    groups => UpdateVMGroupsDataGridView(groups));
                             }
                             else
                             {
@@ -1139,6 +1148,33 @@ namespace HyperView
             {
                 FileLogger.Message($"Error updating VM Groups DataGridView: {ex.Message}",
                     FileLogger.EventType.Error, 2071);
+            }
+        }
+
+        private void UpdateVMGroupsDataGridView()
+        {
+            try
+            {
+                FileLogger.Message("Refreshing VM Groups DataGridView (silent refresh)",
+                    FileLogger.EventType.Information, 2083);
+
+                // Get VM Groups without showing message boxes
+                var vmGroups = VMGroups.GetHyperVVMGroups(cmd => ExecutePowerShellCommand(cmd));
+
+                if (vmGroups != null)
+                {
+                    UpdateVMGroupsDataGridView(vmGroups);
+                }
+                else
+                {
+                    FileLogger.Message("No VM Groups retrieved during silent refresh",
+                        FileLogger.EventType.Information, 2084);
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Error during silent VM Groups refresh: {ex.Message}",
+                    FileLogger.EventType.Error, 2085);
             }
         }
     }
