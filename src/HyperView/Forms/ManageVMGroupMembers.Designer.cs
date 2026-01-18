@@ -89,7 +89,7 @@
             buttonAdd.TabIndex = 5;
             buttonAdd.Text = "Add >";
             buttonAdd.UseVisualStyleBackColor = true;
-            buttonAdd.Click += buttonAdd_Click;
+            buttonAdd.Click += ButtonAdd_Click;
             // 
             // buttonClose
             // 
@@ -99,7 +99,7 @@
             buttonClose.TabIndex = 6;
             buttonClose.Text = "Close";
             buttonClose.UseVisualStyleBackColor = true;
-            buttonClose.Click += buttonClose_Click;
+            buttonClose.Click += ButtonClose_Click;
             // 
             // buttonRemove
             // 
@@ -109,7 +109,7 @@
             buttonRemove.TabIndex = 7;
             buttonRemove.Text = "< Remove";
             buttonRemove.UseVisualStyleBackColor = true;
-            buttonRemove.Click += buttonRemove_Click;
+            buttonRemove.Click += ButtonRemove_Click;
             // 
             // ManageVMGroupMembers
             // 

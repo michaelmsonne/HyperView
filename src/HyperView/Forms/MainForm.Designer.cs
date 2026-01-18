@@ -203,6 +203,7 @@
             buttonManageServerMembers.TabIndex = 2;
             buttonManageServerMembers.Text = "Manage server members";
             buttonManageServerMembers.UseVisualStyleBackColor = true;
+            buttonManageServerMembers.Click += buttonManageServerMembers_Click;
             // 
             // groupBox1
             // 
@@ -490,7 +491,7 @@
             // allVMDataToolStripMenuItem
             // 
             allVMDataToolStripMenuItem.Name = "allVMDataToolStripMenuItem";
-            allVMDataToolStripMenuItem.Size = new Size(180, 22);
+            allVMDataToolStripMenuItem.Size = new Size(135, 22);
             allVMDataToolStripMenuItem.Text = "All VM data";
             allVMDataToolStripMenuItem.Click += allVMDataToolStripMenuItem_Click;
             // 

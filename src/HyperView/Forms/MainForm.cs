@@ -1619,5 +1619,94 @@ namespace HyperView
 
             return vmData;
         }
+
+        private void buttonManageServerMembers_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                FileLogger.Message("User initiated VM Group member management",
+                    FileLogger.EventType.Information, 2139);
+
+                // Check if there's an active Hyper-V connection
+                if (!SessionContext.IsSessionActive())
+                {
+                    MessageBox.Show("Please connect to a Hyper-V server first.",
+                        "Connection Required",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                // Get selected VM group
+                if (datagridviewVMGroups == null || datagridviewVMGroups.SelectedRows.Count == 0)
+                {
+                    MessageBox.Show("Please select a VM Group to manage.",
+                        "No Selection",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    return;
+                }
+
+                string groupName = datagridviewVMGroups.SelectedRows[0].Cells["Group Name"].Value?.ToString();
+
+                if (string.IsNullOrEmpty(groupName))
+                {
+                    MessageBox.Show("Invalid VM Group selection.",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                    return;
+                }
+
+                FileLogger.Message($"User selected VM Group '{groupName}' for member management",
+                    FileLogger.EventType.Information, 2140);
+
+                // Get list of all available VMs from the overview grid
+                var allVMs = new List<string>();
+                if (datagridviewVMOverView != null)
+                {
+                    foreach (DataGridViewRow row in datagridviewVMOverView.Rows)
+                    {
+                        var vmName = row.Cells["VM Name"].Value?.ToString();
+                        if (!string.IsNullOrEmpty(vmName))
+                        {
+                            allVMs.Add(vmName);
+                        }
+                    }
+                }
+
+                // Show manage members form
+                using (Forms.ManageVMGroupMembers manageForm = new Forms.ManageVMGroupMembers())
+                {
+                    manageForm.GroupName = groupName;
+                    manageForm.AllVMs = allVMs;
+                    manageForm.ExecutePowerShellCommand = cmd => ExecutePowerShellCommand(cmd);
+
+                    var result = manageForm.ShowDialog();
+
+                    if (result == DialogResult.OK)
+                    {
+                        FileLogger.Message($"Member management completed for group '{groupName}', refreshing view...",
+                            FileLogger.EventType.Information, 2141);
+
+                        // Refresh the VM Groups view
+                        VMGroups.RefreshVMGroupsView(
+                            $"Group members updated: {groupName}",
+                            cmd => ExecutePowerShellCommand(cmd),
+                            groups => UpdateVMGroupsDataGridView(groups));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                string errorMsg = $"Error managing VM Group members: {ex.Message}";
+                FileLogger.Message(errorMsg, FileLogger.EventType.Error, 2142);
+
+                MessageBox.Show(errorMsg,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
     }
 }

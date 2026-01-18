@@ -39,6 +39,12 @@ namespace HyperView.Class
         public string Error { get; set; }
     }
 
+    public class VMGroupMemberResult
+    {
+        public bool Success { get; set; }
+        public string Error { get; set; }
+    }
+
     public static class VMGroups
     {
         public static List<VMGroupInfo> GetHyperVVMGroups(
@@ -454,6 +460,112 @@ namespace HyperView.Class
                     FileLogger.EventType.Error, 2093);
 
                 return new VMGroupRenameResult
+                {
+                    Success = false,
+                    Error = ex.Message
+                };
+            }
+        }
+
+        public static VMGroupMemberResult AddVMToGroup(
+            string vmName,
+            string groupName,
+            Func<string, System.Collections.ObjectModel.Collection<PSObject>> executePowerShellCommand)
+        {
+            try
+            {
+                FileLogger.Message($"Adding VM '{vmName}' to group '{groupName}'...",
+                    FileLogger.EventType.Information, 2117);
+
+                // Build PowerShell command
+                string command = $@"
+                    $group = Get-VMGroup -Name '{groupName}' -ErrorAction Stop
+                    $vm = Get-VM -Name '{vmName}' -ErrorAction Stop
+                    Add-VMGroupMember -VMGroup $group -VM $vm -ErrorAction Stop
+                ";
+
+                var results = executePowerShellCommand(command);
+
+                if (results == null)
+                {
+                    string error = "Failed to add VM to group. Check logs for details.";
+                    FileLogger.Message($"Failed to add VM '{vmName}' to group '{groupName}': {error}",
+                        FileLogger.EventType.Error, 2118);
+
+                    return new VMGroupMemberResult
+                    {
+                        Success = false,
+                        Error = error
+                    };
+                }
+
+                FileLogger.Message($"Successfully added VM '{vmName}' to group '{groupName}'",
+                    FileLogger.EventType.Information, 2119);
+
+                return new VMGroupMemberResult
+                {
+                    Success = true
+                };
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Exception adding VM '{vmName}' to group '{groupName}': {ex.Message}",
+                    FileLogger.EventType.Error, 2120);
+
+                return new VMGroupMemberResult
+                {
+                    Success = false,
+                    Error = ex.Message
+                };
+            }
+        }
+
+        public static VMGroupMemberResult RemoveVMFromGroup(
+            string vmName,
+            string groupName,
+            Func<string, System.Collections.ObjectModel.Collection<PSObject>> executePowerShellCommand)
+        {
+            try
+            {
+                FileLogger.Message($"Removing VM '{vmName}' from group '{groupName}'...",
+                    FileLogger.EventType.Information, 2121);
+
+                // Build PowerShell command
+                string command = $@"
+                    $group = Get-VMGroup -Name '{groupName}' -ErrorAction Stop
+                    $vm = Get-VM -Name '{vmName}' -ErrorAction Stop
+                    Remove-VMGroupMember -VMGroup $group -VM $vm -ErrorAction Stop
+                ";
+
+                var results = executePowerShellCommand(command);
+
+                if (results == null)
+                {
+                    string error = "Failed to remove VM from group. Check logs for details.";
+                    FileLogger.Message($"Failed to remove VM '{vmName}' from group '{groupName}': {error}",
+                        FileLogger.EventType.Error, 2122);
+
+                    return new VMGroupMemberResult
+                    {
+                        Success = false,
+                        Error = error
+                    };
+                }
+
+                FileLogger.Message($"Successfully removed VM '{vmName}' from group '{groupName}'",
+                    FileLogger.EventType.Information, 2123);
+
+                return new VMGroupMemberResult
+                {
+                    Success = true
+                };
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Message($"Exception removing VM '{vmName}' from group '{groupName}': {ex.Message}",
+                    FileLogger.EventType.Error, 2124);
+
+                return new VMGroupMemberResult
                 {
                     Success = false,
                     Error = ex.Message
