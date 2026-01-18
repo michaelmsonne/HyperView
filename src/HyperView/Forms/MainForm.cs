@@ -2130,7 +2130,11 @@ namespace HyperView
         {
             try
             {
-                Process.Start(Globals.ToolStings.URLMyWebPage);
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = Globals.ToolStings.URLMyWebPage,
+                    UseShellExecute = true
+                });
 
                 // Log the opening of the URL message
                 Message("User clicked the 'My webpage' link to open the URL: '" + Globals.ToolStings.URLMyWebPage + "'", EventType.Information, 1052);
@@ -2149,7 +2153,11 @@ namespace HyperView
         {
             try
             {
-                Process.Start(Globals.ToolStings.URLMyBlog);
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = Globals.ToolStings.URLMyBlog,
+                    UseShellExecute = true
+                });
 
                 // Log the opening of the URL message
                 Message("User clicked the 'My webpage' link to open the URL: '" + Globals.ToolStings.URLMyBlog + "'", EventType.Information, 1052);
@@ -2224,7 +2232,11 @@ namespace HyperView
         {
             try
             {
-                Process.Start(Globals.ToolStings.URLBuyMeaCoffie);
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = Globals.ToolStings.URLBuyMeaCoffie,
+                    UseShellExecute = true
+                });
 
                 // Log the opening of the URL message
                 Message("User clicked the 'Buy me a coffie' picture in MainForm to open the URL: '" + Globals.ToolStings.URLBuyMeaCoffie + "'", EventType.Information, 1052);
