@@ -40,7 +40,7 @@ namespace HyperView.Forms
         private void InitializeForm()
         {
             // Set initial form height
-            this.Height = 180;
+            this.Height = 113;
             _originalFormHeight = this.Height;
 
             // Initialize combo box with group types

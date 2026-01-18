@@ -902,7 +902,7 @@ namespace HyperView
                 }
 
                 // Try to remove without force first
-                var result = RemoveHyperVVMGroup(selectedGroupName, false);
+                var result = VMGroups.RemoveHyperVVMGroup(selectedGroupName, false, cmd => ExecutePowerShellCommand(cmd));
 
                 if (result.Success)
                 {
@@ -941,7 +941,7 @@ namespace HyperView
                                 FileLogger.EventType.Information, 2044);
 
                             // Try again with force
-                            var forceDeleteResult = RemoveHyperVVMGroup(selectedGroupName, true);
+                            var forceDeleteResult = VMGroups.RemoveHyperVVMGroup(selectedGroupName, true, cmd => ExecutePowerShellCommand(cmd));
 
                             if (forceDeleteResult.Success)
                             {
@@ -996,118 +996,6 @@ namespace HyperView
                     "Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
-            }
-        }
-
-        private class VMGroupDeletionResult
-        {
-            public bool Success { get; set; }
-            public string Error { get; set; }
-            public bool CanForce { get; set; }
-            public int VMCount { get; set; }
-            public List<string> VMNames { get; set; } = new List<string>();
-        }
-
-        private VMGroupDeletionResult RemoveHyperVVMGroup(string groupName, bool force)
-        {
-            try
-            {
-                FileLogger.Message($"Attempting to remove VM Group '{groupName}' (Force: {force})...",
-                    FileLogger.EventType.Information, 2050);
-
-                // First, check if the group has VMs
-                var checkCommand = $"$group = Get-VMGroup -Name '{groupName}' -ErrorAction Stop; " +
-                                 $"$vmMembers = $group.VMMembers; " +
-                                 $"@{{ VMCount = $vmMembers.Count; VMNames = $vmMembers.Name }}";
-
-                var checkResults = ExecutePowerShellCommand(checkCommand);
-
-                int vmCount = 0;
-                List<string> vmNames = new List<string>();
-
-                if (checkResults != null && checkResults.Count > 0)
-                {
-                    var result = checkResults[0];
-                    if (result.BaseObject is System.Collections.Hashtable hashtable)
-                    {
-                        vmCount = Convert.ToInt32(hashtable["VMCount"] ?? 0);
-
-                        if (hashtable["VMNames"] != null)
-                        {
-                            if (hashtable["VMNames"] is System.Collections.IEnumerable enumerable)
-                            {
-                                foreach (var item in enumerable)
-                                {
-                                    if (item != null)
-                                        vmNames.Add(item.ToString());
-                                }
-                            }
-                        }
-                    }
-                }
-
-                FileLogger.Message($"VM Group '{groupName}' contains {vmCount} VM(s)",
-                    FileLogger.EventType.Information, 2051);
-
-                // Build Remove-VMGroup command
-                string removeCommand = force
-                    ? $"Remove-VMGroup -Name '{groupName}' -Force -ErrorAction Stop"
-                    : $"Remove-VMGroup -Name '{groupName}' -ErrorAction Stop";
-
-                var removeResults = ExecutePowerShellCommand(removeCommand);
-
-                // Check if command had errors
-                // Note: ExecutePowerShellCommand returns null if there were errors
-                if (removeResults == null && !force && vmCount > 0)
-                {
-                    // Failed because group contains VMs - can force
-                    FileLogger.Message($"VM Group '{groupName}' removal failed - group contains VMs, force deletion available",
-                        FileLogger.EventType.Warning, 2052);
-
-                    return new VMGroupDeletionResult
-                    {
-                        Success = false,
-                        Error = $"VM Group contains {vmCount} VM(s) and cannot be deleted without force.",
-                        CanForce = true,
-                        VMCount = vmCount,
-                        VMNames = vmNames
-                    };
-                }
-                else if (removeResults == null)
-                {
-                    // Other error
-                    string error = "Failed to remove VM Group. Check logs for details.";
-                    FileLogger.Message($"VM Group '{groupName}' removal failed: {error}",
-                        FileLogger.EventType.Error, 2053);
-
-                    return new VMGroupDeletionResult
-                    {
-                        Success = false,
-                        Error = error,
-                        CanForce = false
-                    };
-                }
-
-                // Success
-                FileLogger.Message($"VM Group '{groupName}' removed successfully via PowerShell",
-                    FileLogger.EventType.Information, 2054);
-
-                return new VMGroupDeletionResult
-                {
-                    Success = true
-                };
-            }
-            catch (Exception ex)
-            {
-                FileLogger.Message($"Exception removing VM Group '{groupName}': {ex.Message}",
-                    FileLogger.EventType.Error, 2055);
-
-                return new VMGroupDeletionResult
-                {
-                    Success = false,
-                    Error = ex.Message,
-                    CanForce = false
-                };
             }
         }
 

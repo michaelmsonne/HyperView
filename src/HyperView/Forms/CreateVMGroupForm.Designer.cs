@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(CreateVMGroupForm));
             buttonOK = new Button();
             buttonCancel = new Button();
             buttonRecommended = new Button();
@@ -36,11 +37,11 @@
             textboxGroupName = new TextBox();
             comboboxGroupType = new ComboBox();
             groupboxRecommended = new GroupBox();
-            treeviewTemplates = new TreeView();
-            labelSelectARecommendedVM = new Label();
-            labelSelected = new Label();
-            textboxDescription = new TextBox();
             buttonUseSelectedTemplate = new Button();
+            textboxDescription = new TextBox();
+            labelSelected = new Label();
+            labelSelectARecommendedVM = new Label();
+            treeviewTemplates = new TreeView();
             groupboxRecommended.SuspendLayout();
             SuspendLayout();
             // 
@@ -118,30 +119,14 @@
             groupboxRecommended.TabStop = false;
             groupboxRecommended.Text = "Recommended VM Groups";
             // 
-            // treeviewTemplates
+            // buttonUseSelectedTemplate
             // 
-            treeviewTemplates.Location = new Point(6, 42);
-            treeviewTemplates.Name = "treeviewTemplates";
-            treeviewTemplates.Size = new Size(270, 241);
-            treeviewTemplates.TabIndex = 0;
-            // 
-            // labelSelectARecommendedVM
-            // 
-            labelSelectARecommendedVM.AutoSize = true;
-            labelSelectARecommendedVM.Location = new Point(6, 19);
-            labelSelectARecommendedVM.Name = "labelSelectARecommendedVM";
-            labelSelectARecommendedVM.Size = new Size(238, 15);
-            labelSelectARecommendedVM.TabIndex = 1;
-            labelSelectARecommendedVM.Text = "Select a recommended VM Group template:";
-            // 
-            // labelSelected
-            // 
-            labelSelected.AutoSize = true;
-            labelSelected.Location = new Point(287, 19);
-            labelSelected.Name = "labelSelected";
-            labelSelected.Size = new Size(87, 15);
-            labelSelected.TabIndex = 2;
-            labelSelected.Text = "Selected Group";
+            buttonUseSelectedTemplate.Location = new Point(282, 260);
+            buttonUseSelectedTemplate.Name = "buttonUseSelectedTemplate";
+            buttonUseSelectedTemplate.Size = new Size(186, 23);
+            buttonUseSelectedTemplate.TabIndex = 4;
+            buttonUseSelectedTemplate.Text = "Use selected Template";
+            buttonUseSelectedTemplate.UseVisualStyleBackColor = true;
             // 
             // textboxDescription
             // 
@@ -152,14 +137,30 @@
             textboxDescription.Size = new Size(186, 215);
             textboxDescription.TabIndex = 3;
             // 
-            // buttonUseSelectedTemplate
+            // labelSelected
             // 
-            buttonUseSelectedTemplate.Location = new Point(282, 260);
-            buttonUseSelectedTemplate.Name = "buttonUseSelectedTemplate";
-            buttonUseSelectedTemplate.Size = new Size(186, 23);
-            buttonUseSelectedTemplate.TabIndex = 4;
-            buttonUseSelectedTemplate.Text = "Use selected Template";
-            buttonUseSelectedTemplate.UseVisualStyleBackColor = true;
+            labelSelected.AutoSize = true;
+            labelSelected.Location = new Point(287, 19);
+            labelSelected.Name = "labelSelected";
+            labelSelected.Size = new Size(87, 15);
+            labelSelected.TabIndex = 2;
+            labelSelected.Text = "Selected Group";
+            // 
+            // labelSelectARecommendedVM
+            // 
+            labelSelectARecommendedVM.AutoSize = true;
+            labelSelectARecommendedVM.Location = new Point(6, 19);
+            labelSelectARecommendedVM.Name = "labelSelectARecommendedVM";
+            labelSelectARecommendedVM.Size = new Size(238, 15);
+            labelSelectARecommendedVM.TabIndex = 1;
+            labelSelectARecommendedVM.Text = "Select a recommended VM Group template:";
+            // 
+            // treeviewTemplates
+            // 
+            treeviewTemplates.Location = new Point(6, 42);
+            treeviewTemplates.Name = "treeviewTemplates";
+            treeviewTemplates.Size = new Size(270, 241);
+            treeviewTemplates.TabIndex = 0;
             // 
             // CreateVMGroupForm
             // 
@@ -174,7 +175,12 @@
             Controls.Add(buttonRecommended);
             Controls.Add(buttonCancel);
             Controls.Add(buttonOK);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            MaximizeBox = false;
+            MinimizeBox = false;
             Name = "CreateVMGroupForm";
+            StartPosition = FormStartPosition.CenterParent;
             Text = "CreateVMGroupForm";
             groupboxRecommended.ResumeLayout(false);
             groupboxRecommended.PerformLayout();
